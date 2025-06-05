@@ -1,75 +1,77 @@
 "use client";
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link" 
-import axios from 'axios'
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import axios from "axios";
 
 interface LoginResponse {
   token: string;
-  username: string; // Assuming you get the username in the response
+  username: string;
 }
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [username, setUsername] = useState<string | null>(null)
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      // Make API call to authenticate the user
-      const response = await axios.post<LoginResponse>("http://localhost:5000/api/auth/login", formData)
+      const response = await axios.post<LoginResponse>(
+        "http://localhost:5000/api/auth/login",
+        formData
+      );
 
-      // Access token and username from response
-      const { token, username } = response.data
+      const { token, username } = response.data;
 
-      // Store the token and username in localStorage
-      localStorage.setItem("token", token)
-      localStorage.setItem("username", username)
+      // ✅ Save token and username to localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("username", username);
 
-      // Update the state with the new username
-      setUsername(username)
-
-      // Redirect to dashboard
-      router.push("/dashboard")
-    } catch (err) {
-      setError("Invalid email or password")
+      // ✅ Redirect to dashboard
+      router.push("/dashboard");
+    } catch (err: any) {
+      const message =
+        err.response?.data?.message || "Invalid email or password";
+      setError(message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  useEffect(() => {
-    // Fetch username from localStorage on page load
-    const storedUsername = localStorage.getItem("username")
-    if (storedUsername) {
-      setUsername(storedUsername)
-    }
-  }, [])
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Log in to your account</CardTitle>
-          <CardDescription>Enter your credentials to access your Quantum Bank account</CardDescription>
+          <CardDescription>
+            Enter your credentials to access your Quantum Bank account
+          </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -104,7 +106,9 @@ export default function LoginPage() {
                 onChange={handleChange}
               />
             </div>
-            {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+            {error && (
+              <p className="text-sm font-medium text-destructive">{error}</p>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button type="submit" className="w-full" disabled={loading}>
@@ -114,5 +118,5 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
-  )
+  );
 }

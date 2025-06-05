@@ -1,35 +1,40 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const cors = require('cors'); // Import the CORS package
-const authRoutes = require('./routes/authRoutes'); // Import the auth routes
+const cors = require('cors');
+const authRoutes = require('./routes/authRoutes');
 
-// Load environment variables
+// Load environment variables from .env file
 dotenv.config();
 
 const app = express();
 
-// Enable CORS
+// Enable CORS for frontend at localhost:3000
 app.use(cors({
-  origin: 'http://localhost:3000', // This is the port your Next.js frontend is running on
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  credentials: true,
 }));
 
-// Middlewares
-app.use(express.json()); // To parse JSON request bodies
+// Middleware to parse JSON bodies
+app.use(express.json());
 
-// Routes
-app.use('/api/auth', authRoutes); // Use the auth routes for /api/auth
+// Mount auth routes at /api/auth
+app.use('/api/auth', authRoutes);
 
-// MongoDB Connection
+// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
 .then(() => console.log("MongoDB connected"))
-.catch(err => console.error(err));
+.catch(err => {
+  console.error("MongoDB connection error:", err);
+  process.exit(1); // Exit if DB connection fails
+});
 
-// Start Server
+// Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

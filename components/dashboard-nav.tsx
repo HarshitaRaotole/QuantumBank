@@ -1,6 +1,7 @@
-"use client"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CreditCard,
@@ -11,57 +12,58 @@ import {
   LogOut,
   Menu,
   Zap,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
-import { useState, useEffect } from "react"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 const navItems = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Accounts",
-    href: "/dashboard/accounts",
-    icon: CreditCard,
-  },
-  {
-    title: "Transfer",
-    href: "/dashboard/transfer",
-    icon: ArrowLeftRight,
-  },
-  {
-    title: "Transactions",
-    href: "/dashboard/transactions",
-    icon: Clock,
-  },
-  {
-    title: "Analytics",
-    href: "/dashboard/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
-]
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Accounts", href: "/dashboard/accounts", icon: CreditCard },
+  { title: "Transfer", href: "/dashboard/transfer", icon: ArrowLeftRight },
+  { title: "Transactions", href: "/dashboard/transactions", icon: Clock },
+  { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { title: "Settings", href: "/dashboard/settings", icon: Settings },
+];
+
+type UserResponse = {
+  name: string;
+};
 
 export function DashboardNav() {
-  const pathname = usePathname()
-  const [open, setOpen] = useState(false)
-  const [username, setUsername] = useState<string | null>(null)
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    // Retrieve the username from localStorage
-    const storedUsername = localStorage.getItem("username")
-    if (storedUsername) {
-      setUsername(storedUsername) // Set the username to state
-    }
-  }, [])
+    const fetchUsername = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("No token found in localStorage");
+        return;
+      }
+
+      try {
+        const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/me`;
+
+        const response = await axios.get<UserResponse>(apiUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        setUsername(response.data.name);
+      } catch (error) {
+        console.error("Failed to fetch username:", error);
+        setUsername(null);
+      }
+    };
+
+    fetchUsername();
+  }, []);
 
   return (
     <>
@@ -75,7 +77,7 @@ export function DashboardNav() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[240px] sm:w-[300px]">
-            <div className="flex items-center gap-2 pb-4 pt-2">
+            <div className="flex items-center gap-2 pb-4 pt-2 w-full">
               <Zap className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">Quantum Bank</span>
             </div>
@@ -87,7 +89,9 @@ export function DashboardNav() {
                   onClick={() => setOpen(false)}
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    pathname === item.href ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+                    pathname === item.href
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -117,13 +121,6 @@ export function DashboardNav() {
             <Zap className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">Quantum Bank</span>
           </Link>
-          <div className="flex items-center gap-2">
-            {username ? (
-              <span className="font-semibold">{username}</span>
-            ) : (
-              <span>Loading...</span>
-            )}
-          </div>
         </div>
         <nav className="flex-1 overflow-auto p-4">
           <div className="space-y-2">
@@ -133,7 +130,9 @@ export function DashboardNav() {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  pathname === item.href ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+                  pathname === item.href
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
                 )}
               >
                 <item.icon className="h-5 w-5" />
@@ -142,16 +141,7 @@ export function DashboardNav() {
             ))}
           </div>
         </nav>
-        <div className="border-t p-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout
-          </Link>
-        </div>
       </div>
     </>
-  )
+  );
 }

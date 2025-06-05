@@ -4,45 +4,77 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { ArrowUpRight, ArrowDownRight, DollarSign, CreditCard, Wallet, ArrowRight, Bell } from "lucide-react"
+import { ArrowUpRight, ArrowDownRight, DollarSign, CreditCard, Wallet, Bell } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ArrowRight } from "lucide-react"
 
-// Mock data for demonstration
-const mockAccountData = {
-  name: "John Doe",
-  totalBalance: 24580.52,
-  accounts: [
-    { id: 1, name: "Main Account", balance: 18450.25, number: "**** 4582" },
-    { id: 2, name: "Savings", balance: 6130.27, number: "**** 7291" },
-  ],
-  recentTransactions: [
-    { id: 1, description: "Amazon", amount: -59.99, date: "Today", type: "expense" },
-    { id: 2, description: "Salary", amount: 2750.0, date: "Yesterday", type: "income" },
-    { id: 3, description: "Grocery Store", amount: -123.45, date: "Mar 23", type: "expense" },
-    { id: 4, description: "Transfer to Savings", amount: -500.0, date: "Mar 21", type: "transfer" },
-    { id: 5, description: "Netflix", amount: -14.99, date: "Mar 20", type: "expense" },
-  ],
-  insights: [
-    { category: "Food & Dining", amount: 420.32, percentage: 28 },
-    { category: "Shopping", amount: 215.75, percentage: 14 },
-    { category: "Transportation", amount: 350.0, percentage: 23 },
-    { category: "Entertainment", amount: 185.5, percentage: 12 },
-    { category: "Other", amount: 350.43, percentage: 23 },
-  ],
+type Account = {
+  id: number
+  name: string
+  balance: number
+  number: string
+}
+
+type Transaction = {
+  id: number
+  description: string
+  amount: number
+  date: string
+  type: "income" | "expense" | "transfer"
+}
+
+type Insight = {
+  category: string
+  amount: number
+  percentage: number
+}
+
+type UserData = {
+  name: string
+  email: string
+  totalBalance: number
+  accounts: Account[]
+  recentTransactions: Transaction[]
+  insights: Insight[]
 }
 
 export default function DashboardPage() {
-  const [userData, setUserData] = useState(mockAccountData)
+  const [userData, setUserData] = useState<UserData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1000)
+    async function fetchUserData() {
+      setLoading(true)
+      setError(null)
 
-    return () => clearTimeout(timer)
+      try {
+        const token = localStorage.getItem("token")
+        if (!token) {
+          throw new Error("No auth token found. Please login.")
+        }
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch user data")
+        }
+
+        const data: UserData = await res.json()
+        setUserData(data)
+      } catch (err: any) {
+        setError(err.message || "An error occurred")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUserData()
   }, [])
 
   const formatCurrency = (amount: number) => {
@@ -50,6 +82,18 @@ export default function DashboardPage() {
       style: "currency",
       currency: "USD",
     }).format(amount)
+  }
+
+  if (loading) {
+    return <div className="p-8 text-center text-lg">Loading dashboard...</div>
+  }
+
+  if (error) {
+    return <div className="p-8 text-center text-red-500">Error: {error}</div>
+  }
+
+  if (!userData) {
+    return <div className="p-8 text-center">No user data available.</div>
   }
 
   return (
@@ -72,7 +116,7 @@ export default function DashboardPage() {
             </Avatar>
             <div className="hidden md:block">
               <p className="text-sm font-medium leading-none">{userData.name}</p>
-              <p className="text-sm text-muted-foreground">john.doe@example.com</p>
+              <p className="text-sm text-muted-foreground">{userData.email || "N/A"}</p>
             </div>
           </div>
         </div>
@@ -81,7 +125,6 @@ export default function DashboardPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, {userData.name.split(" ")[0]}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button asChild>
@@ -97,6 +140,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Summary Cards */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -108,6 +152,7 @@ export default function DashboardPage() {
               <p className="text-xs text-muted-foreground">+2.5% from last month</p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Income</CardTitle>
@@ -118,6 +163,7 @@ export default function DashboardPage() {
               <p className="text-xs text-muted-foreground">+0.0% from last month</p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Expenses</CardTitle>
@@ -128,24 +174,27 @@ export default function DashboardPage() {
               <p className="text-xs text-muted-foreground">-4.3% from last month</p>
             </CardContent>
           </Card>
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Savings</CardTitle>
               <Wallet className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(userData.accounts[1].balance)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(userData.accounts[1]?.balance || 0)}</div>
               <p className="text-xs text-muted-foreground">+12.5% from last month</p>
             </CardContent>
           </Card>
         </div>
 
+        {/* Tabs Section */}
         <Tabs defaultValue="accounts" className="space-y-4">
           <TabsList>
             <TabsTrigger value="accounts">Accounts</TabsTrigger>
             <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
             <TabsTrigger value="insights">Financial Insights</TabsTrigger>
           </TabsList>
+
           <TabsContent value="accounts" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {userData.accounts.map((account) => (
@@ -160,6 +209,7 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
               ))}
+
               <Card className="flex flex-col items-center justify-center p-8">
                 <div className="mb-4 rounded-full border border-dashed p-4">
                   <CreditCard className="h-8 w-8 text-muted-foreground" />
@@ -168,95 +218,58 @@ export default function DashboardPage() {
                 <p className="mb-4 text-center text-sm text-muted-foreground">
                   Link a new bank account or create a virtual account
                 </p>
-                <Button variant="outline">
-                  <Link href="/dashboard/accounts/new">Get Started</Link>
+                <Button variant="outline" className="w-full">
+                  Add Account
                 </Button>
               </Card>
             </div>
           </TabsContent>
+
           <TabsContent value="transactions" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>Your last 5 transactions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {userData.recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div
-                          className={`rounded-full p-2 ${
-                            transaction.type === "income"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : transaction.type === "expense"
-                                ? "bg-rose-100 text-rose-700"
-                                : "bg-blue-100 text-blue-700"
-                          }`}
-                        >
-                          {transaction.type === "income" ? (
-                            <ArrowUpRight className="h-4 w-4" />
-                          ) : transaction.type === "expense" ? (
-                            <ArrowDownRight className="h-4 w-4" />
-                          ) : (
-                            <ArrowRight className="h-4 w-4" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{transaction.description}</p>
-                          <p className="text-xs text-muted-foreground">{transaction.date}</p>
-                        </div>
-                      </div>
-                      <div
-                        className={`text-sm font-medium ${
-                          transaction.amount < 0 ? "text-rose-600" : "text-emerald-600"
-                        }`}
-                      >
-                        {transaction.amount < 0 ? "-" : "+"}
-                        {formatCurrency(Math.abs(transaction.amount))}
-                      </div>
-                    </div>
-                  ))}
+            <div className="divide-y divide-border rounded-md border">
+              {userData.recentTransactions.map((txn) => (
+                <div key={txn.id} className="flex items-center justify-between space-x-4 p-4">
+                  <div>
+                    <p className="font-medium">{txn.description}</p>
+                    <p className="text-xs text-muted-foreground">{txn.date}</p>
+                  </div>
+                  <p
+                    className={`text-sm font-medium ${
+                      txn.type === "income"
+                        ? "text-emerald-500"
+                        : txn.type === "expense"
+                        ? "text-rose-500"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {txn.amount < 0 ? "-" : "+"}
+                    {formatCurrency(Math.abs(txn.amount))}
+                  </p>
                 </div>
-                <div className="mt-6 flex justify-center">
-                  <Button variant="outline" asChild>
-                    <Link href="/dashboard/transactions">
-                      View All Transactions
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
           </TabsContent>
+
           <TabsContent value="insights" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Spending Breakdown</CardTitle>
-                <CardDescription>Your spending by category this month</CardDescription>
+                <CardTitle>Expense Distribution</CardTitle>
+                <CardDescription>Percentage spent by category</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {userData.insights.map((category, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium">{category.category}</p>
-                        <p className="text-sm font-medium">{formatCurrency(category.amount)}</p>
+                <div className="flex flex-col gap-3">
+                  {userData.insights.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No insights available.</p>
+                  ) : (
+                    userData.insights.map((insight, index) => (
+                      <div key={`${insight.category}-${index}`} className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium">{insight.category}</p>
+                        <p className="text-sm font-semibold">
+                          {formatCurrency(insight.amount || 0)} ({insight.percentage ?? 0}%)
+                        </p>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-primary" style={{ width: `${category.percentage}%` }} />
-                      </div>
-                      <p className="text-xs text-muted-foreground">{category.percentage}% of total spending</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 flex justify-center">
-                  <Button variant="outline" asChild>
-                    <Link href="/dashboard/analytics">
-                      View Detailed Analytics
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </Button>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
