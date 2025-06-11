@@ -4,8 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  CreditCard,
-  ArrowLeftRight,
   Clock,
   BarChart3,
   Settings,
@@ -16,54 +14,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState } from "react";
 
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Accounts", href: "/dashboard/accounts", icon: CreditCard },
-  { title: "Transfer", href: "/dashboard/transfer", icon: ArrowLeftRight },
   { title: "Transactions", href: "/dashboard/transactions", icon: Clock },
   { title: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-type UserResponse = {
-  name: string;
-};
-
-export function DashboardNav() {
+export function DashboardNav({ username }: { username: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchUsername = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.warn("No token found in localStorage");
-        return;
-      }
-
-      try {
-        const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/me`;
-
-        const response = await axios.get<UserResponse>(apiUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        setUsername(response.data.name);
-      } catch (error) {
-        console.error("Failed to fetch username:", error);
-        setUsername(null);
-      }
-    };
-
-    fetchUsername();
-  }, []);
 
   return (
     <>
@@ -98,6 +60,8 @@ export function DashboardNav() {
                   {item.title}
                 </Link>
               ))}
+
+              {/* Logout in mobile nav */}
               <Link
                 href="/"
                 className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
@@ -122,7 +86,7 @@ export function DashboardNav() {
             <span className="text-xl font-bold">Quantum Bank</span>
           </Link>
         </div>
-        <nav className="flex-1 overflow-auto p-4">
+        <nav className="flex-1 overflow-auto p-4 flex flex-col justify-between">
           <div className="space-y-2">
             {navItems.map((item, index) => (
               <Link
@@ -139,6 +103,17 @@ export function DashboardNav() {
                 {item.title}
               </Link>
             ))}
+          </div>
+
+          {/* Logout pinned to bottom-left */}
+          <div className="pt-4 border-t border-muted">
+            <Link
+              href="/"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+            >
+              <LogOut className="h-5 w-5" />
+              Logout
+            </Link>
           </div>
         </nav>
       </div>

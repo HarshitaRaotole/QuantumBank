@@ -53,11 +53,6 @@ export default function Home() {
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Link href="/login">
-                    <Button size="lg" variant="outline">
-                      Log In
-                    </Button>
-                  </Link>
                 </div>
               </div>
               <div className="flex items-center justify-center">

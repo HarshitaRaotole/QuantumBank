@@ -17,7 +17,12 @@ import axios from "axios";
 
 interface LoginResponse {
   token: string;
-  username: string;
+  user: {
+    username: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
 export default function LoginPage() {
@@ -47,11 +52,11 @@ export default function LoginPage() {
         formData
       );
 
-      const { token, username } = response.data;
+      const { token, user } = response.data;
 
-      // ✅ Save token and username to localStorage
+      // ✅ Save token and full user object to localStorage
       localStorage.setItem("token", token);
-      localStorage.setItem("username", username);
+      localStorage.setItem("user", JSON.stringify(user));
 
       // ✅ Redirect to dashboard
       router.push("/dashboard");
