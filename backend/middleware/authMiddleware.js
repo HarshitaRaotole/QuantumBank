@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer <token>
+  const token = authHeader && authHeader.split(' ')[1]; // Expected: "Bearer <token>"
 
   if (!token) {
     return res.status(401).json({ message: 'No token provided' });
@@ -13,7 +13,7 @@ function authenticateToken(req, res, next) {
       return res.status(403).json({ message: 'Invalid token' });
     }
 
-    // ✅ Extract all fields from the token
+    // Attach user info to the request for use in protected routes
     req.user = {
       userId: decoded.userId,
       username: decoded.username,
@@ -21,10 +21,6 @@ function authenticateToken(req, res, next) {
       firstName: decoded.firstName,
       lastName: decoded.lastName,
     };
-
-    // 🐞 Debug logs for verification
-    console.log("🔍 Authenticated User ID:", decoded.userId);
-    console.log("🔍 Authenticated Username:", decoded.username);
 
     next();
   });
