@@ -1,13 +1,12 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CreditCard, Plus, Wallet, Eye, EyeOff } from "lucide-react"
+import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft } from "lucide-react"
 import AddAccountForm from "@/components/AddAccountForm"
 
 interface Account {
@@ -16,7 +15,7 @@ interface Account {
   balance: number
 }
 
-export default function Dashboard() {
+const Dashboard = () => {
   const [user, setUser] = useState<{ username: string; email: string } | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showForm, setShowForm] = useState(false)
@@ -70,6 +69,11 @@ export default function Dashboard() {
     Savings: "bg-purple-100 text-purple-700 border-purple-200",
     Current: "bg-violet-100 text-violet-700 border-violet-200",
     Credit: "bg-indigo-100 text-indigo-700 border-indigo-200",
+  }
+
+  const handleTransfer = (account: Account) => {
+    // Navigate to transfer page with the selected account pre-filled
+    router.push(`/dashboard/transfer?fromAccount=${encodeURIComponent(account.accountNumber)}`)
   }
 
   if (loading) {
@@ -174,7 +178,12 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" className="flex-1 gap-2 bg-purple-600 hover:bg-purple-700 text-white">
+                    <Button
+                      size="sm"
+                      className="flex-1 gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => handleTransfer(account)}
+                    >
+                      <ArrowRightLeft className="h-4 w-4" />
                       Transfer
                     </Button>
                     <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
@@ -224,3 +233,5 @@ export default function Dashboard() {
     </div>
   )
 }
+
+export default Dashboard

@@ -1,11 +1,14 @@
-import express from 'express';
-import { addAccount, getAccounts } from '../controllers/accountController.js';
-import authenticateToken from '../middleware/authMiddleware.js';
+import express from "express"
+import { addAccount, getAccounts, transferMoney } from "../controllers/accountController.js"
+import authenticateToken from "../middleware/authMiddleware.js"
 
-const router = express.Router();
+const router = express.Router()
 
-// ✅ Use Controllers for Clean Code
-router.post('/', authenticateToken, addAccount);
-router.get('/', authenticateToken, getAccounts);
+// Existing routes
+router.post("/", authenticateToken, addAccount)
+router.get("/", authenticateToken, getAccounts)
 
-export default router;
+// Transfer route - MAKE SURE THIS EXISTS
+router.post("/transfer", authenticateToken, transferMoney)
+
+export default router

@@ -1,278 +1,362 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowRight, CheckCircle2 } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { ArrowLeft, AlertCircle, CreditCard, CheckCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
-// Mock data
-const accounts = [
-  { id: "1", name: "Main Account", balance: 18450.25, number: "**** 4582" },
-  { id: "2", name: "Savings", balance: 6130.27, number: "**** 7291" },
-]
-
-const contacts = [
-  { id: "1", name: "Sarah Johnson", email: "sarah.j@example.com", accountNumber: "**** 1234" },
-  { id: "2", name: "Michael Chen", email: "m.chen@example.com", accountNumber: "**** 5678" },
-  { id: "3", name: "Emma Williams", email: "emma.w@example.com", accountNumber: "**** 9012" },
-]
+interface Account {
+  accountType: string
+  accountNumber: string
+  balance: number
+}
 
 export default function TransferPage() {
-  const [amount, setAmount] = useState("")
+  const [accounts, setAccounts] = useState<Account[]>([])
   const [fromAccount, setFromAccount] = useState("")
-  const [toContact, setToContact] = useState("")
-  const [toAccount, setToAccount] = useState("")
-  const [note, setNote] = useState("")
-  const [transferComplete, setTransferComplete] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [toAccountNumber, setToAccountNumber] = useState("")
+  const [amount, setAmount] = useState("")
+  const [description, setDescription] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
 
-  const handleTransfer = (e: React.FormEvent) => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const preSelectedAccount = searchParams.get("fromAccount")
+
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      router.push("/login")
+      return
+    }
+
+    const fetchAccounts = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        // Check if response is JSON
+        const contentType = response.headers.get("content-type")
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("API endpoint not available. Please set up your backend first.")
+        }
+
+        const data = await response.json()
+
+        if (data.accounts) {
+          setAccounts(data.accounts)
+
+          // Pre-select the account if coming from dashboard
+          if (preSelectedAccount) {
+            const selectedAcc = data.accounts.find((acc: Account) => acc.accountNumber === preSelectedAccount)
+            if (selectedAcc) {
+              setFromAccount(selectedAcc.accountNumber)
+            }
+          }
+        } else {
+          setError("No accounts found")
+        }
+      } catch (error) {
+        console.error("Failed to fetch accounts:", error)
+        setError("Unable to load accounts. Please ensure your backend API is running.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAccounts()
+  }, [router, preSelectedAccount])
+
+  const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
+    setMessage("")
+    setError("")
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-      setTransferComplete(true)
-    }, 1500)
+    try {
+      const token = localStorage.getItem("token")
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts/transfer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fromAccountNumber: fromAccount,
+          toAccountNumber: toAccountNumber,
+          amount: Number.parseFloat(amount),
+          description,
+        }),
+      })
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type")
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Transfer API not available. Please set up your backend transfer endpoint.")
+      }
+
+      const result = await response.json()
+
+      if (response.ok) {
+        setMessage("Transfer completed successfully!")
+        // Reset form
+        setFromAccount(preSelectedAccount || "")
+        setToAccountNumber("")
+        setAmount("")
+        setDescription("")
+
+        // Redirect back to dashboard after 2 seconds
+        setTimeout(() => {
+          router.push("/dashboard")
+        }, 2000)
+      } else {
+        setError(result.error || "Transfer failed")
+      }
+    } catch (error) {
+      console.error("Transfer error:", error)
+      setError("Transfer failed. Please ensure your backend API is running and try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const resetForm = () => {
-    setAmount("")
-    setFromAccount("")
-    setToContact("")
-    setToAccount("")
-    setNote("")
-    setTransferComplete(false)
-  }
+  const selectedFromAccount = accounts.find((acc) => acc.accountNumber === fromAccount)
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
-
-  if (transferComplete) {
+  if (loading) {
     return (
-      <div className="container mx-auto max-w-md py-12">
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col items-center space-y-2">
-              <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-              <CardTitle className="text-center text-2xl">Transfer Complete!</CardTitle>
-              <CardDescription className="text-center">Your money is on its way</CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg bg-muted p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-muted-foreground">Amount</p>
-                  <p className="font-medium">{formatCurrency(Number.parseFloat(amount))}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">From</p>
-                  <p className="font-medium">{accounts.find((a) => a.id === fromAccount)?.name || "Your account"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">To</p>
-                  <p className="font-medium">{contacts.find((c) => c.id === toContact)?.name || "Recipient"}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Date</p>
-                  <p className="font-medium">{new Date().toLocaleDateString()}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" onClick={resetForm}>
-              Make Another Transfer
-            </Button>
-          </CardFooter>
-        </Card>
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-48" />
+        </div>
+        <div className="max-w-4xl mx-auto">
+          <Skeleton className="h-96 w-full" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto max-w-4xl py-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Transfer Money</h1>
-        <p className="text-muted-foreground">Send money to your contacts or between your accounts</p>
+    <div className="space-y-8">
+      {/* Header Section - Matching Dashboard Style */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-4 mb-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/dashboard")}
+                className="gap-2 bg-purple-600 hover:bg-purple-700 border-purple-600 text-white hover:text-white"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Dashboard
+              </Button>
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Transfer Money</h1>
+            <p className="text-gray-600">Send money between your accounts securely and instantly.</p>
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="send" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="send">Send to Contact</TabsTrigger>
-          <TabsTrigger value="between">Between Accounts</TabsTrigger>
-        </TabsList>
+      {/* Status Messages */}
+      {error && (
+        <Card className="border border-red-200 bg-gradient-to-br from-red-50 to-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-red-700 font-medium">{error}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        <TabsContent value="send">
-          <Card>
-            <form onSubmit={handleTransfer}>
-              <CardHeader>
-                <CardTitle>Send Money</CardTitle>
-                <CardDescription>Transfer money to friends, family, or businesses</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount</Label>
+      {message && (
+        <Card className="border border-green-200 bg-gradient-to-br from-green-50 to-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <p className="text-green-700 font-medium">{message}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Transfer Section */}
+      <div className="max-w-4xl mx-auto">
+        {/* Transfer Form */}
+        <Card className="border border-purple-100 bg-gradient-to-br from-purple-50 to-white">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-gray-900">Transfer Details</CardTitle>
+            <CardDescription className="text-gray-600">Fill in the details below to transfer money.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {accounts.length === 0 && !error ? (
+              <div className="text-center py-8">
+                <div className="p-4 rounded-full bg-purple-50 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <CreditCard className="h-8 w-8 text-purple-600" />
+                </div>
+                <p className="text-gray-500 mb-4">No accounts available for transfer.</p>
+                <Button
+                  onClick={() => router.push("/dashboard")}
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Go to Dashboard
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleTransfer} className="space-y-6">
+                {/* Account Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="fromAccount" className="text-sm font-medium text-gray-900">
+                      From Account
+                    </Label>
+                    <Select value={fromAccount} onValueChange={setFromAccount}>
+                      <SelectTrigger className="h-12 bg-white text-black border-gray-300">
+                        <SelectValue placeholder="Select source account" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {accounts.map((account) => (
+                          <SelectItem key={account.accountNumber} value={account.accountNumber}>
+                            <div className="flex items-center gap-3 py-2">
+                              <div className="p-2 rounded-lg bg-purple-50">
+                                <CreditCard className="h-4 w-4 text-purple-600" />
+                              </div>
+                              <div>
+                                <div className="font-medium text-black">
+                                  {account.accountType} - ••••{account.accountNumber.slice(-4)}
+                                </div>
+                                <div className="text-sm text-gray-500">₹{account.balance.toLocaleString()}</div>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="toAccountNumber" className="text-sm font-medium text-gray-900">
+                      To Account Number
+                    </Label>
+                    <Input
+                      id="toAccountNumber"
+                      type="text"
+                      value={toAccountNumber}
+                      onChange={(e) => setToAccountNumber(e.target.value)}
+                      placeholder="Enter destination account number"
+                      className="h-12 bg-white text-black border-gray-300"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Amount Input */}
+                <div className="space-y-3">
+                  <Label htmlFor="amount" className="text-sm font-medium text-gray-900">
+                    Transfer Amount
+                  </Label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <span className="text-muted-foreground">$</span>
-                    </div>
+                    <span className="absolute left-4 top-4 text-gray-500 font-medium">₹</span>
                     <Input
                       id="amount"
                       type="number"
-                      placeholder="0.00"
-                      className="pl-8"
+                      step="0.01"
+                      min="0.01"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="pl-8 h-12 text-lg bg-white text-black border-gray-300"
                       required
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="from-account">From</Label>
-                  <Select value={fromAccount} onValueChange={setFromAccount} required>
-                    <SelectTrigger id="from-account">
-                      <SelectValue placeholder="Select account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name} ({formatCurrency(account.balance)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="to-contact">To</Label>
-                  <Select value={toContact} onValueChange={setToContact} required>
-                    <SelectTrigger id="to-contact">
-                      <SelectValue placeholder="Select recipient" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contacts.map((contact) => (
-                        <SelectItem key={contact.id} value={contact.id}>
-                          {contact.name} ({contact.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="note">Note (Optional)</Label>
-                  <Input
-                    id="note"
-                    placeholder="What's this for?"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                  />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Processing..." : "Send Money"}
-                  {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="between">
-          <Card>
-            <form onSubmit={handleTransfer}>
-              <CardHeader>
-                <CardTitle>Transfer Between Accounts</CardTitle>
-                <CardDescription>Move money between your own accounts</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount-between">Amount</Label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                      <span className="text-muted-foreground">$</span>
+                  {selectedFromAccount && amount && Number.parseFloat(amount) > selectedFromAccount.balance && (
+                    <div className="flex items-center gap-2 text-sm text-red-600">
+                      <AlertCircle className="h-4 w-4" />
+                      <span>Insufficient funds. Available: ₹{selectedFromAccount.balance.toLocaleString()}</span>
                     </div>
-                    <Input
-                      id="amount-between"
-                      type="number"
-                      placeholder="0.00"
-                      className="pl-8"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      required
-                    />
-                  </div>
+                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="from-account-between">From</Label>
-                  <Select value={fromAccount} onValueChange={setFromAccount} required>
-                    <SelectTrigger id="from-account-between">
-                      <SelectValue placeholder="Select account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name} ({formatCurrency(account.balance)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="to-account">To</Label>
-                  <Select value={toAccount} onValueChange={setToAccount} required>
-                    <SelectTrigger id="to-account">
-                      <SelectValue placeholder="Select account" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {accounts
-                        .filter((account) => account.id !== fromAccount)
-                        .map((account) => (
-                          <SelectItem key={account.id} value={account.id}>
-                            {account.name} ({formatCurrency(account.balance)})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="note-between">Note (Optional)</Label>
-                  <Input
-                    id="note-between"
-                    placeholder="What's this for?"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
+                {/* Description */}
+                <div className="space-y-3">
+                  <Label htmlFor="description" className="text-sm font-medium text-gray-900">
+                    Description (Optional)
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Enter transfer description or note..."
+                    rows={3}
+                    className="resize-none bg-white text-black border-gray-300"
                   />
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Processing..." : "Transfer Money"}
-                  {!loading && <ArrowRight className="ml-2 h-4 w-4" />}
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1 h-12"
+                    onClick={() => router.push("/dashboard")}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 h-12 bg-purple-600 hover:bg-purple-700 text-white font-medium"
+                    disabled={
+                      isLoading ||
+                      !fromAccount ||
+                      !toAccountNumber ||
+                      !amount ||
+                      (selectedFromAccount && Number.parseFloat(amount) > selectedFromAccount.balance) ||
+                      accounts.length === 0
+                    }
+                  >
+                    {isLoading ? "Processing Transfer..." : "Transfer Money"}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Tips */}
+        <Card className="border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-gray-900">Quick Tips</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-indigo-600 mt-2 flex-shrink-0"></div>
+              <p className="text-sm text-gray-600">Enter the exact account number of the recipient</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-indigo-600 mt-2 flex-shrink-0"></div>
+              <p className="text-sm text-gray-600">Double-check account details before confirming</p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-2 h-2 rounded-full bg-indigo-600 mt-2 flex-shrink-0"></div>
+              <p className="text-sm text-gray-600">You'll receive a confirmation once transfer is complete</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

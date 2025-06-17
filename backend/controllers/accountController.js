@@ -1,43 +1,43 @@
-import Account from "../models/Account.js";
+import Account from "../models/Account.js"
+import mongoose from "mongoose"
 
-// Add a new account
+// Add a new account (EXISTING CODE - KEEP AS IS)
 export const addAccount = async (req, res) => {
   try {
-    const { accountType, accountNumber, balance } = req.body;
+    const { accountType, accountNumber, balance } = req.body
 
     if (!accountType || !accountNumber || balance == null) {
       return res.status(400).json({
         success: false,
-        error: "All fields are required: accountType, accountNumber, balance"
-      });
+        error: "All fields are required: accountType, accountNumber, balance",
+      })
     }
 
-    const parsedBalance = parseFloat(balance);
+    const parsedBalance = Number.parseFloat(balance)
     if (isNaN(parsedBalance)) {
       return res.status(400).json({
         success: false,
-        error: "Balance must be a valid number"
-      });
+        error: "Balance must be a valid number",
+      })
     }
 
-    // ✅ Debug: Check if userId is present from middleware
-    const userId = req.user?.userId;
-    console.log("🔍 Authenticated User ID:", userId); // <-- Add this
+    const userId = req.user?.userId
+    console.log("🔍 Authenticated User ID:", userId)
 
     if (!userId) {
       return res.status(401).json({
         success: false,
-        error: "Unauthorized: User ID missing"
-      });
+        error: "Unauthorized: User ID missing",
+      })
     }
 
     // Check for duplicate account number
-    const existingAccount = await Account.findOne({ accountNumber });
+    const existingAccount = await Account.findOne({ accountNumber })
     if (existingAccount) {
       return res.status(409).json({
         success: false,
-        error: "Account number already exists"
-      });
+        error: "Account number already exists",
+      })
     }
 
     // Create new account for the authenticated user
@@ -45,10 +45,10 @@ export const addAccount = async (req, res) => {
       accountType,
       accountNumber,
       balance: parsedBalance,
-      user: userId  // ✅ Set user field correctly
-    });
+      user: userId,
+    })
 
-    await newAccount.save();
+    await newAccount.save()
 
     return res.status(201).json({
       success: true,
@@ -57,43 +57,157 @@ export const addAccount = async (req, res) => {
         id: newAccount._id,
         accountType: newAccount.accountType,
         accountNumber: newAccount.accountNumber,
-        balance: newAccount.balance
-      }
-    });
-
+        balance: newAccount.balance,
+      },
+    })
   } catch (error) {
-    console.error("❌ Error adding account:", error);
+    console.error("❌ Error adding account:", error)
     return res.status(500).json({
       success: false,
       error: "Internal Server Error",
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+      details: process.env.NODE_ENV === "development" ? error.message : undefined,
+    })
   }
-};
+}
 
-// Get accounts for logged-in user
+// Get accounts for logged-in user (EXISTING CODE - KEEP AS IS)
 export const getAccounts = async (req, res) => {
   try {
-    const userId = req.user?.userId;
-    console.log("📄 Fetching accounts for user ID:", userId); // <-- Add this
+    const userId = req.user?.userId
+    console.log("📄 Fetching accounts for user ID:", userId)
 
-    const accounts = await Account.find({ user: userId });
+    const accounts = await Account.find({ user: userId })
 
     res.status(200).json({
       success: true,
-      accounts
-    });
-
+      accounts,
+    })
   } catch (error) {
-    console.error("❌ Error fetching accounts:", error);
+    console.error("❌ Error fetching accounts:", error)
     res.status(500).json({
       success: false,
-      error: "Failed to fetch accounts"
-    });
+      error: "Failed to fetch accounts",
+    })
   }
-};
+}
 
+// NEW FUNCTION - Transfer money with manual account number input
+export const transferMoney = async (req, res) => {
+  console.log("🚀 Transfer endpoint hit!")
+  console.log("📝 Request body:", req.body)
+
+  try {
+    const { fromAccountNumber, toAccountNumber, amount, description } = req.body
+    const userId = req.user?.userId
+
+    console.log("👤 User ID:", userId)
+
+    // Validation
+    if (!fromAccountNumber || !toAccountNumber || !amount) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required fields: fromAccountNumber, toAccountNumber, amount",
+      })
+    }
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: User ID missing",
+      })
+    }
+
+    const parsedAmount = Number.parseFloat(amount)
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Amount must be a valid positive number",
+      })
+    }
+
+    if (fromAccountNumber === toAccountNumber) {
+      return res.status(400).json({
+        success: false,
+        error: "Cannot transfer to the same account",
+      })
+    }
+
+    // Find source account - MUST belong to current user
+    const fromAccount = await Account.findOne({
+      accountNumber: fromAccountNumber,
+      user: userId,
+    })
+
+    if (!fromAccount) {
+      return res.status(404).json({
+        success: false,
+        error: "Source account not found or doesn't belong to you",
+      })
+    }
+
+    // Find destination account - Check if it exists in database
+    const toAccount = await Account.findOne({
+      accountNumber: toAccountNumber,
+    })
+
+    if (!toAccount) {
+      return res.status(404).json({
+        success: false,
+        error: "Destination account not found",
+      })
+    }
+
+    // Check sufficient balance
+    if (fromAccount.balance < parsedAmount) {
+      return res.status(400).json({
+        success: false,
+        error: "Insufficient funds",
+      })
+    }
+
+    // Perform the transfer using MongoDB session for transaction
+    const session = await mongoose.startSession()
+    session.startTransaction()
+
+    try {
+      // Deduct from source account
+      await Account.findByIdAndUpdate(fromAccount._id, { $inc: { balance: -parsedAmount } }, { session })
+
+      // Add to destination account
+      await Account.findByIdAndUpdate(toAccount._id, { $inc: { balance: parsedAmount } }, { session })
+
+      // Commit the transaction
+      await session.commitTransaction()
+
+      return res.status(200).json({
+        success: true,
+        message: "Transfer completed successfully",
+        transferDetails: {
+          from: fromAccount.accountNumber,
+          to: toAccount.accountNumber,
+          amount: parsedAmount,
+          description: description || "",
+        },
+      })
+    } catch (error) {
+      await session.abortTransaction()
+      throw error
+    } finally {
+      session.endSession()
+    }
+  } catch (error) {
+    console.error("❌ Transfer error:", error)
+    return res.status(500).json({
+      success: false,
+      error: "Transfer failed",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined,
+    })
+  }
+}
+
+// UPDATE THIS EXPORT
 export default {
   addAccount,
-  getAccounts
-};
+  getAccounts,
+  transferMoney,
+}
