@@ -1,7 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react" // Ensure useState is imported
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft } from "lucide-re
 import AddAccountForm from "@/components/AddAccountForm"
 
 interface Account {
+  _id: string // Add _id to the Account interface
   accountType: string
   accountNumber: string
   balance: number
@@ -20,7 +21,8 @@ const Dashboard = () => {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showBalances, setShowBalances] = useState(true)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true) // Corrected: useState hook call
+
   const router = useRouter()
 
   useEffect(() => {
@@ -186,8 +188,13 @@ const Dashboard = () => {
                       <ArrowRightLeft className="h-4 w-4" />
                       Transfer
                     </Button>
-                    <Button size="sm" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
-                      View Details
+                    {/* Transaction History Button - Pass account._id */}
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => router.push(`/dashboard/transactions?accountId=${account._id}`)}
+                    >
+                      History
                     </Button>
                   </div>
                 </div>

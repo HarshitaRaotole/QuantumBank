@@ -6,7 +6,8 @@ import cors from "cors"
 import authRoutes from "./routes/authRoutes.js"
 import accountRoutes from "./routes/accountRoutes.js"
 import dashboardRoute from "./routes/dashboardRoute.js"
-import transferRoutes from "./routes/transferRoute.js" // Add this import
+import transferRoutes from "./routes/transferRoute.js"
+import transactionRoutes from "./routes/transactionRoutes.js" // NEW: Import transactionRoutes
 
 dotenv.config()
 
@@ -34,7 +35,8 @@ app.use((req, res, next) => {
 app.use("/api/auth", authRoutes)
 app.use("/api/accounts", accountRoutes)
 app.use("/api/dashboard", dashboardRoute)
-app.use("/api/transfers", transferRoutes) // Add this line
+app.use("/api/transfers", transferRoutes)
+app.use("/api/transactions", transactionRoutes) // NEW: Register the transaction history route
 
 // Test route to verify server is working
 app.get("/test", (req, res) => {

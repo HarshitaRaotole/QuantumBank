@@ -1,7 +1,9 @@
 import Account from "../models/Account.js"
+import Transaction from "../models/Transaction.js"
+import User from "../models/User.js" // Ensure User model is imported if used for relatedAccountUsername
 import mongoose from "mongoose"
 
-// Add a new account (EXISTING CODE - KEEP AS IS)
+// Add a new account
 export const addAccount = async (req, res) => {
   try {
     const { accountType, accountNumber, balance } = req.body
@@ -70,7 +72,7 @@ export const addAccount = async (req, res) => {
   }
 }
 
-// Get accounts for logged-in user (EXISTING CODE - KEEP AS IS)
+// Get accounts for logged-in user
 export const getAccounts = async (req, res) => {
   try {
     const userId = req.user?.userId
@@ -91,7 +93,43 @@ export const getAccounts = async (req, res) => {
   }
 }
 
-// NEW FUNCTION - Transfer money with manual account number input
+// Get a single account by ID
+export const getAccountById = async (req, res) => {
+  try {
+    const { id } = req.params
+    const userId = req.user?.userId
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: User ID missing",
+      })
+    }
+
+    const account = await Account.findOne({ _id: id, user: userId })
+
+    if (!account) {
+      return res.status(404).json({
+        success: false,
+        error: "Account not found or does not belong to you",
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      account,
+    })
+  } catch (error) {
+    console.error("❌ Error fetching account by ID:", error)
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch account",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined,
+    })
+  }
+}
+
+// Transfer money with manual account number input
 export const transferMoney = async (req, res) => {
   console.log("🚀 Transfer endpoint hit!")
   console.log("📝 Request body:", req.body)
@@ -165,6 +203,13 @@ export const transferMoney = async (req, res) => {
       })
     }
 
+    // Fetch usernames for related accounts
+    const toUser = await User.findById(toAccount.user).select("username").lean()
+    const fromUser = await User.findById(fromAccount.user).select("username").lean()
+
+    const toUsername = toUser ? toUser.username : "Unknown User"
+    const fromUsername = fromUser ? fromUser.username : "Unknown User"
+
     // Perform the transfer using MongoDB session for transaction
     const session = await mongoose.startSession()
     session.startTransaction()
@@ -175,6 +220,32 @@ export const transferMoney = async (req, res) => {
 
       // Add to destination account
       await Account.findByIdAndUpdate(toAccount._id, { $inc: { balance: parsedAmount } }, { session })
+
+      // Record debit transaction for the 'from' account
+      const debitTransaction = new Transaction({
+        user: userId,
+        account: fromAccount._id,
+        type: "Debit",
+        amount: parsedAmount,
+        description: description || `Transfer to ${toAccountNumber}`,
+        relatedAccount: toAccountNumber,
+        relatedAccountUsername: toUsername,
+        transactionId: new mongoose.Types.ObjectId().toString(),
+      })
+      await debitTransaction.save({ session })
+
+      // Record credit transaction for the 'to' account
+      const creditTransaction = new Transaction({
+        user: toAccount.user,
+        account: toAccount._id,
+        type: "Credit",
+        amount: parsedAmount,
+        description: description || `Transfer from ${fromAccountNumber}`,
+        relatedAccount: fromAccountNumber,
+        relatedAccountUsername: fromUsername,
+        transactionId: new mongoose.Types.ObjectId().toString(),
+      })
+      await creditTransaction.save({ session })
 
       // Commit the transaction
       await session.commitTransaction()
@@ -203,11 +274,4 @@ export const transferMoney = async (req, res) => {
       details: process.env.NODE_ENV === "development" ? error.message : undefined,
     })
   }
-}
-
-// UPDATE THIS EXPORT
-export default {
-  addAccount,
-  getAccounts,
-  transferMoney,
 }
