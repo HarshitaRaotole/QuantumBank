@@ -84,16 +84,24 @@ export default function LoginPage() {
 
       {/* Login Form */}
       <div className="flex-1 flex items-center justify-center p-4 relative z-10">
-        <Card className="w-full max-w-md border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
-          <CardHeader className="space-y-2 text-center pb-8">
-            <CardTitle className="text-3xl font-bold text-gray-900">Welcome Back</CardTitle>
-            <CardDescription className="text-gray-600 text-lg">
+        <Card className="w-full max-w-sm md:max-w-md border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+          {" "}
+          {/* Adjusted max-w-sm for mobile */}
+          <CardHeader className="space-y-2 text-center pb-6">
+            {" "}
+            {/* Reduced padding */}
+            <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
+            <CardDescription className="text-base text-gray-600">
               Enter your credentials to access your dashboard
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-6 px-8">
-              <div className="space-y-3">
+            <CardContent className="space-y-4 px-6">
+              {" "}
+              {/* Reduced padding and space-y */}
+              <div className="space-y-2">
+                {" "}
+                {/* Reduced space-y */}
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                   Email Address
                 </Label>
@@ -105,10 +113,12 @@ export default function LoginPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="h-12 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
+                  className="h-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900" // Reduced height
                 />
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
+                {" "}
+                {/* Reduced space-y */}
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                     Password
@@ -128,17 +138,14 @@ export default function LoginPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="h-12 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white pr-12 text-gray-900 placeholder:text-gray-500"
+                    className="h-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white pr-10 text-gray-900 placeholder:text-gray-500" // Reduced height and pr
                     autoComplete="current-password"
-                    style={{
-                      WebkitTextSecurity: showPassword ? "none" : "disc",
-                      color: "#111827",
-                    }}
+                    // Removed WebkitTextSecurity as it's non-standard and handled by 'type'
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors" // Adjusted right padding
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -146,15 +153,19 @@ export default function LoginPage() {
                 </div>
               </div>
               {error && (
-                <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+                  {" "}
+                  {/* Reduced padding */}
                   <p className="text-sm font-medium text-red-600">{error}</p>
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-col space-y-6 px-8 pb-8">
+            <CardFooter className="flex flex-col space-y-4 px-6 pb-6">
+              {" "}
+              {/* Reduced padding and space-y */}
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                className="w-full h-10 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]" // Reduced height
                 disabled={loading}
               >
                 {loading ? (
@@ -170,7 +181,7 @@ export default function LoginPage() {
                 <p className="text-gray-600">
                   Don't have an account?{" "}
                   <Link
-                    href="/register"
+                    href="/signup"
                     className="text-purple-600 hover:text-purple-700 font-medium underline underline-offset-4 transition-colors"
                   >
                     Create account

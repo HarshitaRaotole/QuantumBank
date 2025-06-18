@@ -94,17 +94,17 @@ export default function RegisterPage() {
 
       {/* Register Form */}
       <div className="flex-1 flex items-center justify-center p-4 relative z-10">
-        <Card className="w-full max-w-lg border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
-          <CardHeader className="space-y-2 text-center pb-8">
-            <CardTitle className="text-3xl font-bold text-gray-900">Create an account</CardTitle>
-            <CardDescription className="text-gray-600 text-lg">
+        <Card className="w-full max-w-sm md:max-w-md border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
+          <CardHeader className="space-y-2 text-center pb-6">
+            <CardTitle className="text-2xl font-bold text-gray-900">Create an account</CardTitle>
+            <CardDescription className="text-base text-gray-600">
               Enter your information to create your Quantum Bank account
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-6 px-8">
+            <CardContent className="space-y-4 px-6">
               {/* Username Field */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium text-gray-700">
                   Username
                 </Label>
@@ -117,14 +117,14 @@ export default function RegisterPage() {
                     required
                     value={formData.username}
                     onChange={handleChange}
-                    className="h-12 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
+                    className="h-10 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
                   />
                 </div>
               </div>
 
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
                     First name
                   </Label>
@@ -137,11 +137,11 @@ export default function RegisterPage() {
                       required
                       value={formData.firstName}
                       onChange={handleChange}
-                      className="h-12 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
+                      className="h-10 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
                     />
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
                     Last name
                   </Label>
@@ -154,14 +154,14 @@ export default function RegisterPage() {
                       required
                       value={formData.lastName}
                       onChange={handleChange}
-                      className="h-12 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
+                      className="h-10 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
                     />
                   </div>
                 </div>
               </div>
 
               {/* Email Field */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                   Email
                 </Label>
@@ -175,13 +175,13 @@ export default function RegisterPage() {
                     required
                     value={formData.email}
                     onChange={handleChange}
-                    className="h-12 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
+                    className="h-10 pl-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
                   />
                 </div>
               </div>
 
               {/* Password Fields */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                   Password
                 </Label>
@@ -194,16 +194,14 @@ export default function RegisterPage() {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className="h-12 pl-10 pr-12 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
-                    style={{
-                      WebkitTextSecurity: showPassword ? "none" : "disc",
-                      color: "#111827",
-                    }}
+                    className="h-10 pl-10 pr-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
+                    autoComplete="new-password"
+                    // Removed WebkitTextSecurity
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -211,7 +209,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
                   Confirm Password
                 </Label>
@@ -224,16 +222,14 @@ export default function RegisterPage() {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="h-12 pl-10 pr-12 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
-                    style={{
-                      WebkitTextSecurity: showConfirmPassword ? "none" : "disc",
-                      color: "#111827",
-                    }}
+                    className="h-10 pl-10 pr-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
+                    autoComplete="new-password"
+                    // Removed WebkitTextSecurity
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
                     tabIndex={-1}
                   >
                     {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -242,15 +238,15 @@ export default function RegisterPage() {
               </div>
 
               {error && (
-                <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200">
                   <p className="text-sm font-medium text-red-600">{error}</p>
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-col space-y-6 px-8 pb-8">
+            <CardFooter className="flex flex-col space-y-4 px-6 pb-6">
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                className="w-full h-10 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
                 disabled={loading}
               >
                 {loading ? (
