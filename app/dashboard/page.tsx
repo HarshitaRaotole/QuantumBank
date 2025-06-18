@@ -1,16 +1,16 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { useEffect, useState } from "react" // Ensure useState is imported
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft } from "lucide-react"
+import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft } from "lucide-react" // Re-import Bell icon
 import AddAccountForm from "@/components/AddAccountForm"
 
 interface Account {
-  _id: string // Add _id to the Account interface
+  _id: string
   accountType: string
   accountNumber: string
   balance: number
@@ -21,7 +21,7 @@ const Dashboard = () => {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showBalances, setShowBalances] = useState(true)
-  const [loading, setLoading] = useState(true) // Corrected: useState hook call
+  const [loading, setLoading] = useState(true)
 
   const router = useRouter()
 
@@ -46,7 +46,6 @@ const Dashboard = () => {
         const userData = await userRes.json()
         const accountsData = await accountsRes.json()
 
-        // Fix: Access username from the correct path based on your Header component
         if (userData.success && userData.user) {
           setUser({
             username: userData.user.username || "",
@@ -74,7 +73,6 @@ const Dashboard = () => {
   }
 
   const handleTransfer = (account: Account) => {
-    // Navigate to transfer page with the selected account pre-filled
     router.push(`/dashboard/transfer?fromAccount=${encodeURIComponent(account.accountNumber)}`)
   }
 
@@ -103,15 +101,17 @@ const Dashboard = () => {
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">Welcome back, {displayName}! 👋</h1>
             <p className="text-gray-600">Here's what's happening with your accounts today.</p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBalances(!showBalances)}
-            className="gap-2 bg-purple-600 hover:bg-purple-700 border-purple-600 text-white hover:text-white"
-          >
-            {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            {showBalances ? "Hide" : "Show"} Balances
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowBalances(!showBalances)}
+              className="gap-2 bg-purple-600 hover:bg-purple-700 border-purple-600 text-white hover:text-white"
+            >
+              {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showBalances ? "Hide" : "Show"} Balances
+            </Button>
+          </div>
         </div>
       </div>
 

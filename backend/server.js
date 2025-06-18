@@ -7,7 +7,8 @@ import authRoutes from "./routes/authRoutes.js"
 import accountRoutes from "./routes/accountRoutes.js"
 import dashboardRoute from "./routes/dashboardRoute.js"
 import transferRoutes from "./routes/transferRoute.js"
-import transactionRoutes from "./routes/transactionRoutes.js" // NEW: Import transactionRoutes
+import transactionRoutes from "./routes/transactionRoutes.js"
+import notificationRoutes from "./routes/notificationRoutes.js" // NEW: Import notificationRoutes
 
 dotenv.config()
 
@@ -33,10 +34,11 @@ app.use((req, res, next) => {
 
 // Register routes
 app.use("/api/auth", authRoutes)
-app.use("/api/accounts", accountRoutes)
+app.use("/api/accounts", accountRoutes) // Ensure this is correctly mapped
 app.use("/api/dashboard", dashboardRoute)
 app.use("/api/transfers", transferRoutes)
-app.use("/api/transactions", transactionRoutes) // NEW: Register the transaction history route
+app.use("/api/transactions", transactionRoutes)
+app.use("/api/notifications", notificationRoutes) // NEW: Register the notification routes
 
 // Test route to verify server is working
 app.get("/test", (req, res) => {

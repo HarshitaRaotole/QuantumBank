@@ -1,6 +1,7 @@
 import Account from "../models/Account.js"
 import Transaction from "../models/Transaction.js"
-import User from "../models/User.js" // Ensure User model is imported
+import User from "../models/User.js"
+import Notification from "../models/Notification.js" // NEW: Import Notification model
 import mongoose from "mongoose"
 
 // Add a new account
@@ -261,6 +262,23 @@ export const transferMoney = async (req, res) => {
       })
       await creditTransaction.save({ session })
       console.log("Saved creditTransaction with relatedAccountUsername:", creditTransaction.relatedAccountUsername)
+
+      // NEW: Create notifications for both sender and receiver
+      const debitNotification = new Notification({
+        user: userId,
+        message: `₹${parsedAmount.toLocaleString()} debited from your account ${fromAccountNumber}.`,
+        type: "debit",
+        transaction: debitTransaction._id,
+      })
+      await debitNotification.save({ session })
+
+      const creditNotification = new Notification({
+        user: toAccount.user,
+        message: `₹${parsedAmount.toLocaleString()} credited to your account ${toAccountNumber}.`,
+        type: "credit",
+        transaction: creditTransaction._id,
+      })
+      await creditNotification.save({ session })
 
       // Commit the transaction
       await session.commitTransaction()
