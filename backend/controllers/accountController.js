@@ -1,6 +1,6 @@
 import Account from "../models/Account.js"
 import Transaction from "../models/Transaction.js"
-import User from "../models/User.js" // Ensure User model is imported if used for relatedAccountUsername
+import User from "../models/User.js" // Ensure User model is imported
 import mongoose from "mongoose"
 
 // Add a new account
@@ -138,7 +138,7 @@ export const transferMoney = async (req, res) => {
     const { fromAccountNumber, toAccountNumber, amount, description } = req.body
     const userId = req.user?.userId
 
-    console.log("👤 User ID:", userId)
+    console.log("👤 User ID (initiating transfer):", userId)
 
     // Validation
     if (!fromAccountNumber || !toAccountNumber || !amount) {
@@ -182,6 +182,7 @@ export const transferMoney = async (req, res) => {
         error: "Source account not found or doesn't belong to you",
       })
     }
+    console.log("🔍 Found fromAccount:", fromAccount.accountNumber, "User ID:", fromAccount.user)
 
     // Find destination account - Check if it exists in database
     const toAccount = await Account.findOne({
@@ -194,6 +195,7 @@ export const transferMoney = async (req, res) => {
         error: "Destination account not found",
       })
     }
+    console.log("🔍 Found toAccount:", toAccount.accountNumber, "User ID:", toAccount.user)
 
     // Check sufficient balance
     if (fromAccount.balance < parsedAmount) {
@@ -204,11 +206,19 @@ export const transferMoney = async (req, res) => {
     }
 
     // Fetch usernames for related accounts
+    console.log("Fetching username for toAccount.user:", toAccount.user)
     const toUser = await User.findById(toAccount.user).select("username").lean()
+    console.log("Fetched toUser:", toUser)
+
+    console.log("Fetching username for fromAccount.user:", fromAccount.user)
     const fromUser = await User.findById(fromAccount.user).select("username").lean()
+    console.log("Fetched fromUser:", fromUser)
 
     const toUsername = toUser ? toUser.username : "Unknown User"
     const fromUsername = fromUser ? fromUser.username : "Unknown User"
+
+    console.log("Derived toUsername:", toUsername)
+    console.log("Derived fromUsername:", fromUsername)
 
     // Perform the transfer using MongoDB session for transaction
     const session = await mongoose.startSession()
@@ -221,18 +231,22 @@ export const transferMoney = async (req, res) => {
       // Add to destination account
       await Account.findByIdAndUpdate(toAccount._id, { $inc: { balance: parsedAmount } }, { session })
 
+      // Determine the description to save: if empty or not provided, save as null
+      const savedDescriptionForDB = description ? description : null
+
       // Record debit transaction for the 'from' account
       const debitTransaction = new Transaction({
         user: userId,
         account: fromAccount._id,
         type: "Debit",
         amount: parsedAmount,
-        description: description || `Transfer to ${toAccountNumber}`,
+        description: savedDescriptionForDB, // Use the determined description for DB
         relatedAccount: toAccountNumber,
         relatedAccountUsername: toUsername,
         transactionId: new mongoose.Types.ObjectId().toString(),
       })
       await debitTransaction.save({ session })
+      console.log("Saved debitTransaction with relatedAccountUsername:", debitTransaction.relatedAccountUsername)
 
       // Record credit transaction for the 'to' account
       const creditTransaction = new Transaction({
@@ -240,12 +254,13 @@ export const transferMoney = async (req, res) => {
         account: toAccount._id,
         type: "Credit",
         amount: parsedAmount,
-        description: description || `Transfer from ${fromAccountNumber}`,
+        description: savedDescriptionForDB, // Use the determined description for DB
         relatedAccount: fromAccountNumber,
         relatedAccountUsername: fromUsername,
         transactionId: new mongoose.Types.ObjectId().toString(),
       })
       await creditTransaction.save({ session })
+      console.log("Saved creditTransaction with relatedAccountUsername:", creditTransaction.relatedAccountUsername)
 
       // Commit the transaction
       await session.commitTransaction()
@@ -257,7 +272,7 @@ export const transferMoney = async (req, res) => {
           from: fromAccount.accountNumber,
           to: toAccount.accountNumber,
           amount: parsedAmount,
-          description: description || "",
+          description: savedDescriptionForDB, // Return the saved description
         },
       })
     } catch (error) {

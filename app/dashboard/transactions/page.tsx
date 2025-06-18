@@ -10,13 +10,19 @@ import { ArrowLeft } from "lucide-react"
 
 interface Transaction {
   _id: string
-  date: string
+  date: string // This field is pre-formatted in backend, but we'll use createdAt for full timestamp
   description: string
   amount: number
   type: "Credit" | "Debit" | "Transfer"
   relatedAccount?: string
   relatedAccountUsername?: string
-  createdAt: string
+  createdAt: string // Use this for full date and time
+  account: {
+    // Added to reflect populated account data
+    _id: string // Ensure _id is available for comparison
+    accountNumber: string
+    accountType: string
+  }
 }
 
 interface Account {
@@ -91,9 +97,8 @@ export default function TransactionHistoryPage() {
     fetchData()
   }, [router, accountId])
 
-  const pageTitle = account
-    ? `${account.accountType} Account (${account.accountNumber.slice(-4)}) Transaction History`
-    : "All Accounts Transaction History"
+  // Simplified page title
+  const pageTitle = "Transaction History"
 
   if (loading) {
     return (
@@ -149,12 +154,17 @@ export default function TransactionHistoryPage() {
               </Button>
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-gray-900">{pageTitle}</h1>
+            {account && ( // Show account details if a specific account is selected
+              <p className="text-gray-600">
+                For {account.accountType} Account ({account.accountNumber.slice(-4)})
+              </p>
+            )}
             <p className="text-gray-600">View your recent transactions and account activity.</p>
           </div>
         </div>
       </div>
 
-      <Card className="w-full max-w-4xl mx-auto border border-purple-100 bg-white text-gray-900">
+      <Card className="w-full max-w-4xl mx-auto border border-purple-100 bg-white text-gray-900 shadow-sm">
         <CardHeader>
           <CardTitle>Transaction Details</CardTitle>
           <CardDescription className="text-gray-600">A detailed list of all your financial movements.</CardDescription>
@@ -167,25 +177,34 @@ export default function TransactionHistoryPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    {" "}
-                    {/* Ensure no whitespace here */}
-                    <TableHead className="w-[100px] text-gray-900">ID</TableHead>
-                    <TableHead className="text-gray-900">Date</TableHead>
+                    <TableHead className="w-[80px] text-gray-900">ID</TableHead>
+                    <TableHead className="text-gray-900">Date & Time</TableHead>
                     <TableHead className="text-gray-900">Description</TableHead>
                     <TableHead className="text-right text-gray-900">Amount</TableHead>
                     <TableHead className="text-gray-900">Type</TableHead>
+                    <TableHead className="text-gray-900">My Account</TableHead>
                     <TableHead className="text-gray-900">Related Account</TableHead>
                     <TableHead className="text-gray-900">Account Holder</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {transactions.map((transaction) => (
-                    <TableRow key={transaction._id}>
-                      {" "}
-                      {/* Ensure no whitespace here */}
+                    <TableRow
+                      key={transaction._id}
+                      className={
+                        accountId && transaction.account?._id === accountId
+                          ? "bg-purple-100 hover:bg-purple-200" // Updated highlight color
+                          : "" // Default row styling
+                      }
+                    >
                       <TableCell className="font-medium text-gray-900">{transaction._id.slice(-6)}</TableCell>
-                      <TableCell className="text-gray-900">{transaction.date}</TableCell>
-                      <TableCell className="text-gray-900">{transaction.description}</TableCell>
+                      <TableCell className="text-gray-900">
+                        {new Date(transaction.createdAt).toLocaleString("en-IN", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </TableCell>
+                      <TableCell className="text-gray-900">{transaction.description || "N/A"}</TableCell>
                       <TableCell
                         className={`text-right ${transaction.type === "Credit" ? "text-green-600" : "text-red-600"}`}
                       >
@@ -195,6 +214,7 @@ export default function TransactionHistoryPage() {
                         })}
                       </TableCell>
                       <TableCell className="text-gray-900">{transaction.type}</TableCell>
+                      <TableCell className="text-gray-900">{transaction.account?.accountNumber || "N/A"}</TableCell>
                       <TableCell className="text-gray-900">{transaction.relatedAccount || "N/A"}</TableCell>
                       <TableCell className="text-gray-900">{transaction.relatedAccountUsername || "N/A"}</TableCell>
                     </TableRow>
