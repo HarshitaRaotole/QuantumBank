@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft } from "lucide-react" // Re-import Bell icon
+import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft } from "lucide-react"
 import AddAccountForm from "@/components/AddAccountForm"
 
 interface Account {
@@ -21,13 +21,14 @@ const Dashboard = () => {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showBalances, setShowBalances] = useState(true)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true) // Start with loading true
 
   const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) {
+      // If no token, redirect to login immediately
       router.push("/login")
       return
     }
@@ -43,6 +44,15 @@ const Dashboard = () => {
           }),
         ])
 
+        // Check if user data fetch was successful and user is authenticated
+        if (!userRes.ok) {
+          // If user data fetch fails (e.g., token expired/invalid), redirect to login
+          console.error("Failed to fetch user data, redirecting to login.")
+          localStorage.removeItem("token") // Clear invalid token
+          router.push("/login")
+          return
+        }
+
         const userData = await userRes.json()
         const accountsData = await accountsRes.json()
 
@@ -55,14 +65,16 @@ const Dashboard = () => {
         setAccounts(accountsData.accounts || [])
       } catch (err) {
         console.error("Error fetching data:", err)
+        // Catch network errors or other exceptions and redirect
+        localStorage.removeItem("token") // Clear token on error
         router.push("/login")
       } finally {
-        setLoading(false)
+        setLoading(false) // Set loading to false after data fetch or redirect
       }
     }
 
     fetchData()
-  }, [router])
+  }, [router]) // Depend on router to ensure effect runs when router is ready
 
   const displayName = user?.username || "User"
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
@@ -76,6 +88,7 @@ const Dashboard = () => {
     router.push(`/dashboard/transfer?fromAccount=${encodeURIComponent(account.accountNumber)}`)
   }
 
+  // Show loading state while authentication check and data fetching are in progress
   if (loading) {
     return (
       <div className="space-y-6">
@@ -92,13 +105,18 @@ const Dashboard = () => {
     )
   }
 
+  // If not loading and user is null (meaning redirect happened or failed), return null to prevent rendering
+  if (!user && !loading) {
+    return null
+  }
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Welcome back, {displayName}! 👋</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">Welcome back, {displayName}!</h1>
             <p className="text-gray-600">Here's what's happening with your accounts today.</p>
           </div>
           <div className="flex items-center gap-4">

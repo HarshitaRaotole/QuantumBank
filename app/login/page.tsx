@@ -119,16 +119,10 @@ export default function LoginPage() {
               <div className="space-y-2">
                 {" "}
                 {/* Reduced space-y */}
-                <div className="flex items-center justify-between">
+                <div>
                   <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                     Password
                   </Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-purple-600 hover:text-purple-700 underline underline-offset-4 transition-colors"
-                  >
-                    Forgot password?
-                  </Link>
                 </div>
                 <div className="relative">
                   <Input
@@ -140,7 +134,6 @@ export default function LoginPage() {
                     onChange={handleChange}
                     className="h-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white pr-10 text-gray-900 placeholder:text-gray-500" // Reduced height and pr
                     autoComplete="current-password"
-                    // Removed WebkitTextSecurity as it's non-standard and handled by 'type'
                   />
                   <button
                     type="button"

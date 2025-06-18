@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Download } from "lucide-react" // Import Download icon
 
 interface Transaction {
   _id: string
@@ -97,6 +97,60 @@ export default function TransactionHistoryPage() {
     fetchData()
   }, [router, accountId])
 
+  const handleDownloadCsv = () => {
+    if (transactions.length === 0) {
+      alert("No transactions to download.")
+      return
+    }
+
+    const headers = [
+      "Transaction ID",
+      "Date & Time",
+      "Description",
+      "Amount",
+      "Type",
+      "My Account Number",
+      "Related Account",
+      "Account Holder",
+    ]
+
+    const csvRows = transactions.map((txn) => {
+      const myAccountNumber = txn.account?.accountNumber || "N/A"
+      const amountFormatted = txn.amount.toLocaleString("en-IN", {
+        style: "currency",
+        currency: "INR",
+      })
+      const dateTime = new Date(txn.createdAt).toLocaleString("en-IN", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+
+      return [
+        `"${txn._id.slice(-6)}"`, // Wrap in quotes to ensure ID is treated as string
+        `"${dateTime}"`,
+        `"${txn.description || "N/A"}"`,
+        `"${amountFormatted}"`, // This formatted string includes the Rupee symbol and is quoted
+        `"${txn.type}"`,
+        `"${myAccountNumber}"`,
+        `"${txn.relatedAccount || "N/A"}"`,
+        `"${txn.relatedAccountUsername || "N/A"}"`,
+      ].join(",")
+    })
+
+    const csvContent = [headers.join(","), ...csvRows].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `quantum_bank_transactions_${new Date().toISOString().slice(0, 10)}.csv`)
+    link.style.visibility = "hidden" // Hide the link
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link) // Clean up
+    URL.revokeObjectURL(url) // Free up memory
+  }
+
   // Simplified page title
   const pageTitle = "Transaction History"
 
@@ -141,7 +195,11 @@ export default function TransactionHistoryPage() {
       {/* Header Section - Matching Dashboard Style */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
+          {" "}
+          {/* Added justify-between here */}
           <div>
+            {" "}
+            {/* This div wraps the back button, title, and description */}
             <div className="flex items-center gap-4 mb-2">
               <Button
                 variant="outline"
@@ -161,6 +219,17 @@ export default function TransactionHistoryPage() {
             )}
             <p className="text-gray-600">View your recent transactions and account activity.</p>
           </div>
+          {/* Download Button moved to the right */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadCsv}
+            className="gap-2 bg-green-600 hover:bg-green-700 border-green-600 text-white hover:text-white self-start" // self-start aligns it to the top right
+            disabled={transactions.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            Download
+          </Button>
         </div>
       </div>
 
