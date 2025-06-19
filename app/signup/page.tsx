@@ -11,6 +11,17 @@ import { Label } from "@/components/ui/label"
 import { Zap, Eye, EyeOff, Loader2, User, Mail, Lock } from "lucide-react"
 import axios from "axios"
 
+interface SignupResponse {
+  token: string // Assuming your backend returns a token on successful signup
+  user: {
+    username: string
+    firstName: string
+    lastName: string
+    email: string
+  }
+  message: string // Assuming your backend returns a message
+}
+
 // Define the backend URL using the environment variable
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
@@ -55,7 +66,7 @@ export default function RegisterPage() {
 
     try {
       // Updated API endpoint to match backend route, prepending the BACKEND_URL
-      const res = await axios.post(`${BACKEND_URL}/api/auth/signup`, {
+      const res = await axios.post<SignupResponse>(`${BACKEND_URL}/api/auth/signup`, {
         username: formData.username, // Sending username
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -63,8 +74,21 @@ export default function RegisterPage() {
         password: formData.password,
       })
 
-      if (res.status === 201) {
-        router.push("/login") // Redirect to login page on successful registration
+      // --- DEBUGGING LOGS ---
+      console.log("Signup API Response Data:", res.data)
+      console.log("Token received from signup:", res.data.token)
+      console.log("User object received from signup:", res.data.user)
+      // --- END DEBUGGING LOGS ---
+
+      if (res.status === 201 || res.status === 200) {
+        // Backend might return 200 or 201
+        const { token, user } = res.data // Destructure token and user from response data
+
+        // ✅ Save token and full user object to localStorage
+        localStorage.setItem("token", token)
+        localStorage.setItem("user", JSON.stringify(user))
+
+        router.push("/dashboard/accounts") // Redirect directly to dashboard accounts page
       }
     } catch (err: any) {
       // Check if the error response exists and handle accordingly
@@ -206,7 +230,6 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     className="h-10 pl-10 pr-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
                     autoComplete="new-password"
-                    // Removed WebkitTextSecurity
                   />
                   <button
                     type="button"
@@ -234,7 +257,6 @@ export default function RegisterPage() {
                     onChange={handleChange}
                     className="h-10 pl-10 pr-10 border-gray-300 focus:border-purple-500 focus:ring-purple-500 bg-white text-gray-900"
                     autoComplete="new-password"
-                    // Removed WebkitTextSecurity
                   />
                   <button
                     type="button"

@@ -1,15 +1,16 @@
 "use client"
-import { useState } from "react"
+
 import type React from "react"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Eye, EyeOff, Loader2 } from "lucide-react" // Added Loader2
 import Link from "next/link"
-import axios from "axios"
-import { Eye, EyeOff, Loader2 } from "lucide-react"
+import axios from "axios" // Assuming axios is installed
 
 interface LoginResponse {
   token: string
@@ -59,6 +60,12 @@ export default function LoginPage() {
 
       const { token, user } = response.data
 
+      // --- DEBUGGING LOGS ---
+      console.log("Login API Response Data:", response.data)
+      console.log("Token received from login:", token)
+      console.log("User object received from login:", user)
+      // --- END DEBUGGING LOGS ---
+
       // ✅ Save token and full user object to localStorage
       localStorage.setItem("token", token)
       localStorage.setItem("user", JSON.stringify(user))
@@ -68,6 +75,7 @@ export default function LoginPage() {
     } catch (err: any) {
       const message = err.response?.data?.message || "Invalid email or password"
       setError(message)
+      console.error("Login error details:", err.response?.data || err.message) // More detailed error logging
     } finally {
       setLoading(false)
     }
@@ -152,7 +160,7 @@ export default function LoginPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-col space-y-4 px-6 pb-6">
+            <div className="flex flex-col space-y-4 px-6 pb-6">
               {" "}
               {/* Reduced padding and space-y */}
               <Button
@@ -180,7 +188,7 @@ export default function LoginPage() {
                   </Link>
                 </p>
               </div>
-            </CardFooter>
+            </div>
           </form>
         </Card>
       </div>
