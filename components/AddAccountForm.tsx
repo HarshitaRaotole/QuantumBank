@@ -28,7 +28,7 @@ export default function AddAccountForm() {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/accounts", {
+      const res = await fetch("/api/accounts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -44,7 +44,8 @@ export default function AccountsPage() {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/accounts", {
+        // Change API endpoint from "http://localhost:5000/api/accounts" to "/api/accounts"
+        const res = await fetch("/api/accounts", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

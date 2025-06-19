@@ -45,7 +45,7 @@ export default function RegisterPage() {
 
     try {
       // Updated API endpoint to match backend route
-      const res = await axios.post("http://localhost:5000/api/auth/signup", {
+      const res = await axios.post("/api/auth/signup", {
         username: formData.username, // Sending username
         firstName: formData.firstName,
         lastName: formData.lastName,

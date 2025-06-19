@@ -36,10 +36,10 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const [userRes, accountsRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/me`, {
+          fetch(`/api/auth/me`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts`, {
+          fetch(`/api/accounts`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ])

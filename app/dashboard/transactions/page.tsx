@@ -52,7 +52,7 @@ export default function TransactionHistoryPage() {
       try {
         // 1. Fetch account details if accountId is present
         if (accountId) {
-          const accountRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts/${accountId}`, {
+          const accountRes = await fetch(`/api/accounts/${accountId}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -67,8 +67,8 @@ export default function TransactionHistoryPage() {
 
         // 2. Fetch transactions
         const transactionsUrl = accountId
-          ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/transactions?accountId=${accountId}`
-          : `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/transactions`
+  ? `/api/transactions?accountId=${accountId}`
+  : `/api/transactions`
 
         const transactionsRes = await fetch(transactionsUrl, {
           headers: {
