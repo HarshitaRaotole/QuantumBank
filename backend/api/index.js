@@ -83,6 +83,11 @@ app.use("/api/transfers", transferRoutes)
 app.use("/api/transactions", transactionRoutes)
 app.use("/api/notifications", notificationRoutes)
 
+// Root route
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to the Quantum Bank Backend API!" })
+})
+
 // Test route to verify server is working
 app.get("/test", (req, res) => {
   res.json({ message: "Server is working!" })
