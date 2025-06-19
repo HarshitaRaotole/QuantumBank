@@ -3,28 +3,61 @@ import mongoose from "mongoose"
 import dotenv from "dotenv"
 import cors from "cors"
 
-import authRoutes from "./routes/authRoutes.js"
-import accountRoutes from "./routes/accountRoutes.js"
-import dashboardRoute from "./routes/dashboardRoute.js"
-import transferRoutes from "./routes/transferRoute.js"
-import transactionRoutes from "./routes/transactionRoutes.js"
-import notificationRoutes from "./routes/notificationRoutes.js" // NEW: Import notificationRoutes
-
+// Load environment variables from .env file
 dotenv.config()
 
 const app = express()
 
-// Enable CORS for frontend at localhost:3000
+// Middleware to parse JSON bodies
+app.use(express.json())
+
+// CORS configuration
+const allowedOrigins = [
+  "http://localhost:3000", // For local Next.js development
+  process.env.FRONTEND_URL, // Your deployed Next.js frontend URL (set this in Vercel env vars)
+].filter(Boolean) // Filter out undefined if FRONTEND_URL is not set
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `The CORS policy for this site does not allow access from the specified Origin.`
+        return callback(new Error(msg), false)
+      }
+      return callback(null, true)
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
 )
 
-// Middleware to parse JSON
-app.use(express.json())
+// MongoDB Connection
+let cachedDb = null
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    console.log("Using existing database connection")
+    return cachedDb
+  }
+
+  if (!process.env.MONGO_URI) {
+    console.error("MONGO_URI environment variable is not set.")
+    throw new Error("MONGO_URI is not set.")
+  }
+
+  try {
+    console.log("Connecting to new database connection")
+    const client = await mongoose.connect(process.env.MONGO_URI)
+    cachedDb = client
+    console.log("MongoDB connected successfully")
+    return cachedDb
+  } catch (err) {
+    console.error("MongoDB connection error:", err)
+    throw err // Re-throw the error to be caught by the serverless function handler
+  }
+}
 
 // Add logging middleware to see all requests
 app.use((req, res, next) => {
@@ -32,33 +65,41 @@ app.use((req, res, next) => {
   next()
 })
 
-// Register routes
+// Import and register your routes here
+import authRoutes from "./routes/authRoutes.js"
+import accountRoutes from "./routes/accountRoutes.js"
+import dashboardRoute from "./routes/dashboardRoute.js"
+import transferRoutes from "./routes/transferRoute.js"
+import transactionRoutes from "./routes/transactionRoutes.js"
+import notificationRoutes from "./routes/notificationRoutes.js"
+
 app.use("/api/auth", authRoutes)
-app.use("/api/accounts", accountRoutes) // Ensure this is correctly mapped
+app.use("/api/accounts", accountRoutes)
 app.use("/api/dashboard", dashboardRoute)
 app.use("/api/transfers", transferRoutes)
 app.use("/api/transactions", transactionRoutes)
-app.use("/api/notifications", notificationRoutes) // NEW: Register the notification routes
+app.use("/api/notifications", notificationRoutes)
 
 // Test route to verify server is working
 app.get("/test", (req, res) => {
   res.json({ message: "Server is working!" })
 })
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => {
-    console.error("MongoDB connection error:", err)
-    process.exit(1)
-  })
+// For Vercel, you export the app instance (this file is not directly used by Vercel, api/index.js is)
+// export default app; // This line is not needed here anymore as api/index.js imports it
 
-// Start server
-const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
+// Connect to MongoDB and then start the server for local development
+const startServer = async () => {
+  try {
+    await connectToDatabase()
+    const PORT = process.env.PORT || 5000
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`)
+    })
+  } catch (error) {
+    console.error("Failed to start server:", error)
+    process.exit(1) // Exit if unable to connect to DB and start server
+  }
+}
+
+startServer()
