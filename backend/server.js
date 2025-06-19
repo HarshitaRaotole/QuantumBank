@@ -84,7 +84,12 @@ async function connectToDatabase() {
 
   try {
     console.log("Connecting to new database connection")
-    const client = await mongoose.connect(process.env.MONGO_URI)
+    const client = await mongoose.connect(process.env.MONGO_URI, {
+      // Adding explicit timeouts for better debugging
+      serverSelectionTimeoutMS: 10000, // Keep trying to send operations for 10 seconds
+      socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+      connectTimeoutMS: 30000, // Give up initial connection after 30 seconds
+    })
     cachedDb = client
     console.log("MongoDB connected successfully")
     return cachedDb
@@ -101,11 +106,26 @@ connectToDatabase().catch((err) => {
   // Depending on your error handling, you might want to exit or just log
 })
 
+// --- NEW: Mongoose connection event listeners for more detailed logging ---
+mongoose.connection.on("connected", () => {
+  console.log("Mongoose default connection open to " + mongoose.connection.host)
+})
+
+mongoose.connection.on("error", (err) => {
+  console.error("Mongoose default connection error: " + err)
+})
+
+mongoose.connection.on("disconnected", () => {
+  console.log("Mongoose default connection disconnected")
+})
+// --- END NEW ---
+
 // Example login route (assuming your backend has one)
 app.post("/api/auth/login", (req, res) => {
   // Your login logic here
   console.log("Login attempt:", req.body)
-  if (req.body.username === "user" && req.body.password === "password") {
+  // This is a placeholder. Your actual authController.js will handle this.
+  if (req.body.email === "test@example.com" && req.body.password === "password") {
     res.status(200).json({ message: "Login successful!", token: "some-jwt-token" })
   } else {
     res.status(401).json({ message: "Invalid credentials" })
