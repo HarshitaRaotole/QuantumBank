@@ -1,17 +1,24 @@
+// This is an example for a Node.js Express backend.
+// Your file name and structure might differ.
+
 import express from "express"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import cors from "cors"
 
 // Load environment variables from .env file
+// In Vercel, environment variables are directly injected, so dotenv.config() might not be strictly needed
+// but it's harmless if you also use a local .env file for development.
 dotenv.config()
 
 const app = express()
+const PORT = process.env.PORT || 3001 // Or whatever port your backend uses
 
 // Middleware to parse JSON bodies
 app.use(express.json())
 
-// CORS configuration
+// --- START CORS CONFIGURATION ---
+// Configure CORS to allow requests from your Vercel frontend domain
 const allowedOrigins = [
   "http://localhost:3000", // For local Next.js development
   process.env.FRONTEND_URL, // Your deployed Next.js frontend URL (set this in Vercel env vars)
@@ -28,36 +35,12 @@ app.use(
       }
       return callback(null, true)
     },
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
+    credentials: true, // Allow cookies to be sent with requests (if your auth uses them)
+    optionsSuccessStatus: 204, // For preflight requests
   }),
 )
-
-// MongoDB Connection
-let cachedDb = null
-
-async function connectToDatabase() {
-  if (cachedDb) {
-    console.log("Using existing database connection")
-    return cachedDb
-  }
-
-  if (!process.env.MONGO_URI) {
-    console.error("MONGO_URI environment variable is not set.")
-    throw new Error("MONGO_URI is not set.")
-  }
-
-  try {
-    console.log("Connecting to new database connection")
-    const client = await mongoose.connect(process.env.MONGO_URI)
-    cachedDb = client
-    console.log("MongoDB connected successfully")
-    return cachedDb
-  } catch (err) {
-    console.error("MongoDB connection error:", err)
-    throw err // Re-throw the error to be caught by the serverless function handler
-  }
-}
+// --- END CORS CONFIGURATION ---
 
 // Add logging middleware to see all requests
 app.use((req, res, next) => {
@@ -85,6 +68,32 @@ app.get("/test", (req, res) => {
   res.json({ message: "Server is working!" })
 })
 
+// MongoDB Connection
+let cachedDb = null
+
+async function connectToDatabase() {
+  if (cachedDb) {
+    console.log("Using existing database connection")
+    return cachedDb
+  }
+
+  if (!process.env.MONGO_URI) {
+    console.error("MONGO_URI environment variable is not set.")
+    throw new Error("MONGO_URI is not set.")
+  }
+
+  try {
+    console.log("Connecting to new database connection")
+    const client = await mongoose.connect(process.env.MONGO_URI)
+    cachedDb = client
+    console.log("MongoDB connected successfully")
+    return cachedDb
+  } catch (err) {
+    console.error("MongoDB connection error:", err)
+    throw err // Re-throw the error to be caught by the serverless function handler
+  }
+}
+
 // Connect to MongoDB once when the function is initialized
 // Vercel will call this function on cold starts
 connectToDatabase().catch((err) => {
@@ -92,5 +101,23 @@ connectToDatabase().catch((err) => {
   // Depending on your error handling, you might want to exit or just log
 })
 
-// For Vercel, you export the app instance
-export default app
+// Example login route (assuming your backend has one)
+app.post("/api/auth/login", (req, res) => {
+  // Your login logic here
+  console.log("Login attempt:", req.body)
+  if (req.body.username === "user" && req.body.password === "password") {
+    res.status(200).json({ message: "Login successful!", token: "some-jwt-token" })
+  } else {
+    res.status(401).json({ message: "Invalid credentials" })
+  }
+})
+
+// Add other backend routes here...
+
+app.get("/", (req, res) => {
+  res.send("Backend is running!")
+})
+
+app.listen(PORT, () => {
+  console.log(`Backend server listening on port ${PORT}`)
+})
