@@ -32,6 +32,9 @@ interface Account {
   balance: number
 }
 
+// Define the backend URL using the environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+
 export default function TransactionHistoryPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [account, setAccount] = useState<Account | null>(null)
@@ -48,11 +51,19 @@ export default function TransactionHistoryPage() {
       return
     }
 
+    // Add a check to ensure BACKEND_URL is defined
+    if (!BACKEND_URL) {
+      setError("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL.")
+      setLoading(false)
+      return
+    }
+
     const fetchData = async () => {
       try {
         // 1. Fetch account details if accountId is present
         if (accountId) {
-          const accountRes = await fetch(`/api/accounts/${accountId}`, {
+          const accountRes = await fetch(`${BACKEND_URL}/api/accounts/${accountId}`, {
+            // Use BACKEND_URL
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -67,8 +78,8 @@ export default function TransactionHistoryPage() {
 
         // 2. Fetch transactions
         const transactionsUrl = accountId
-  ? `/api/transactions?accountId=${accountId}`
-  : `/api/transactions`
+          ? `${BACKEND_URL}/api/transactions?accountId=${accountId}` // Use BACKEND_URL
+          : `${BACKEND_URL}/api/transactions` // Use BACKEND_URL
 
         const transactionsRes = await fetch(transactionsUrl, {
           headers: {

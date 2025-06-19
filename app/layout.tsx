@@ -1,12 +1,8 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import Header from "@/components/Header" // Import the shared Header component
+import ClientLayout from "@/app/ClientLayout" // Changed import path to use absolute alias
 
-const inter = Inter({ subsets: ["latin"] })
-
+// Metadata is a server-only export, so it stays here in the Server Component layout
 export const metadata: Metadata = {
   title: "Quantum Bank - Smart Banking",
   description: "Next-generation banking platform with intelligent financial management",
@@ -18,17 +14,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen flex-col bg-white text-gray-800">
-            {/* The Header component will now be rendered on all pages */}
-            <Header username="Guest" />
-            <main className="flex-1">{children}</main>
-          </div>
-        </ThemeProvider>
-      </body>
-    </html>
-  )
+  return <ClientLayout>{children}</ClientLayout>
 }

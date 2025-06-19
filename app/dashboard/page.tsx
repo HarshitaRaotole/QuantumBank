@@ -16,6 +16,9 @@ interface Account {
   balance: number
 }
 
+// Define the backend URL using the environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+
 const Dashboard = () => {
   const [user, setUser] = useState<{ username: string; email: string } | null>(null)
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -34,12 +37,22 @@ const Dashboard = () => {
     }
 
     const fetchData = async () => {
+      // Add a check to ensure BACKEND_URL is defined
+      if (!BACKEND_URL) {
+        console.error("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL.")
+        setLoading(false)
+        router.push("/login") // Redirect if backend URL is missing
+        return
+      }
+
       try {
         const [userRes, accountsRes] = await Promise.all([
-          fetch(`/api/auth/me`, {
+          fetch(`${BACKEND_URL}/api/auth/me`, {
+            // Use BACKEND_URL
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`/api/accounts`, {
+          fetch(`${BACKEND_URL}/api/accounts`, {
+            // Use BACKEND_URL
             headers: { Authorization: `Bearer ${token}` },
           }),
         ])

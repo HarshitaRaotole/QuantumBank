@@ -15,6 +15,9 @@ interface Account {
   balance: number
 }
 
+// Define the backend URL using the environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,9 +46,16 @@ export default function AccountsPage() {
         return
       }
 
+      // Add a check to ensure BACKEND_URL is defined
+      if (!BACKEND_URL) {
+        setError("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL.")
+        setLoading(false)
+        return
+      }
+
       try {
-        // Change API endpoint from "http://localhost:5000/api/accounts" to "/api/accounts"
-        const res = await fetch("/api/accounts", {
+        // Change API endpoint to use BACKEND_URL
+        const res = await fetch(`${BACKEND_URL}/api/accounts`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -59,7 +69,8 @@ export default function AccountsPage() {
           setError(data.message || "Failed to fetch accounts")
         }
       } catch (err) {
-        setError("Something went wrong while fetching accounts")
+        console.error("Error fetching accounts:", err) // Log the actual error
+        setError("Something went wrong while fetching accounts. Please check your network or backend.")
       } finally {
         setLoading(false)
       }

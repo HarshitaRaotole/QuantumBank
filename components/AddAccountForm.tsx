@@ -1,15 +1,17 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreditCard, Loader2 } from "lucide-react"
 
-export default function AddAccountForm() {
+// Define the backend URL using the environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+
+const AddAccountForm = () => {
   const [accountType, setAccountType] = useState("")
   const [accountNumber, setAccountNumber] = useState("")
   const [balance, setBalance] = useState("")
@@ -27,8 +29,16 @@ export default function AddAccountForm() {
       return
     }
 
+    // Add a check to ensure BACKEND_URL is defined
+    if (!BACKEND_URL) {
+      alert("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL.")
+      setLoading(false)
+      return
+    }
+
     try {
-      const res = await fetch("/api/accounts", {
+      const res = await fetch(`${BACKEND_URL}/api/accounts`, {
+        // Use BACKEND_URL
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,6 +58,8 @@ export default function AddAccountForm() {
         setAccountType("")
         setAccountNumber("")
         setBalance("")
+        // Optionally, you might want to refresh the accounts list in the dashboard
+        // by triggering a re-fetch or updating state in the parent component.
       } else {
         alert(data.error || "Something went wrong")
       }
@@ -131,3 +143,5 @@ export default function AddAccountForm() {
     </form>
   )
 }
+
+export default AddAccountForm

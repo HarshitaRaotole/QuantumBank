@@ -24,11 +24,11 @@ interface Notification {
   createdAt: string
 }
 
-interface HeaderProps {
-  username: string
-}
+// Define the backend URL using the environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
-export default function Header({ username: propUsername }: HeaderProps) {
+// Removed HeaderProps interface as username prop is no longer needed
+export default function Header() {
   // Initialize isLoggedIn based on localStorage immediately during client-side render
   const [isLoggedIn, setIsLoggedIn] = useState(typeof window !== "undefined" ? !!localStorage.getItem("token") : false)
   const [username, setUsername] = useState("")
@@ -42,8 +42,12 @@ export default function Header({ username: propUsername }: HeaderProps) {
 
   // Function to fetch notifications
   const fetchNotifications = async (token: string) => {
+    if (!BACKEND_URL) {
+      console.error("Backend URL is not configured for notifications.")
+      return
+    }
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/notifications`, {
+      const res = await fetch(`${BACKEND_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
@@ -63,10 +67,15 @@ export default function Header({ username: propUsername }: HeaderProps) {
     const token = localStorage.getItem("token")
     if (!token || unreadCount === 0) return
 
+    if (!BACKEND_URL) {
+      console.error("Backend URL is not configured for marking notifications as read.")
+      return
+    }
+
     const unreadNotificationIds = notifications.filter((n) => !n.isRead).map((n) => n._id)
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/notifications/mark-read`, {
+      const res = await fetch(`${BACKEND_URL}/api/notifications/mark-read`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -105,8 +114,22 @@ export default function Header({ username: propUsername }: HeaderProps) {
         return
       }
 
+      // Add a check to ensure BACKEND_URL is defined
+      if (!BACKEND_URL) {
+        console.error("Backend URL is not configured for user data fetch.")
+        setIsLoggedIn(false)
+        localStorage.removeItem("token")
+        setUsername("")
+        setEmail("")
+        setNotifications([])
+        setUnreadCount(0)
+        setLoading(false)
+        return
+      }
+
       try {
-        const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/me`, {
+        const userRes = await fetch(`${BACKEND_URL}/api/auth/me`, {
+          // Use BACKEND_URL
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -142,7 +165,7 @@ export default function Header({ username: propUsername }: HeaderProps) {
     fetchUserData()
   }, [isLoggedIn, pathname]) // Added isLoggedIn and pathname to dependencies
 
-  const displayName = username || propUsername || "User"
+  const displayName = username || "User" // Removed propUsername fallback
   const initial = displayName ? displayName.charAt(0).toUpperCase() : "?"
 
   const handleLogout = () => {
@@ -152,11 +175,7 @@ export default function Header({ username: propUsername }: HeaderProps) {
   }
 
   const handleDropdownClose = () => {
-    onMarkAllAsRead()
-  }
-
-  const onMarkAllAsRead = async () => {
-    await markAllNotificationsAsRead()
+    markAllNotificationsAsRead()
   }
 
   const handleDashboardClick = () => {

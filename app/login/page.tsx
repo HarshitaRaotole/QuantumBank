@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import axios from "axios"
-import { Zap, Eye, EyeOff, Loader2 } from "lucide-react"
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 
 interface LoginResponse {
   token: string
@@ -20,6 +20,9 @@ interface LoginResponse {
     email: string
   }
 }
+
+// Define the backend URL using the environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
 export default function LoginPage() {
   const router = useRouter()
@@ -43,8 +46,16 @@ export default function LoginPage() {
     setError("")
     setLoading(true)
 
+    // Add a check to ensure BACKEND_URL is defined
+    if (!BACKEND_URL) {
+      setError("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL.")
+      setLoading(false)
+      return
+    }
+
     try {
-      const response = await axios.post<LoginResponse>("/api/auth/login", formData)
+      // Prepend the backend URL to the API endpoint
+      const response = await axios.post<LoginResponse>(`${BACKEND_URL}/api/auth/login`, formData)
 
       const { token, user } = response.data
 
@@ -68,18 +79,6 @@ export default function LoginPage() {
       <div className="absolute top-0 left-0 w-full h-full">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-200/20 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-violet-200/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      {/* Header */}
-      <div className="relative z-10 flex items-center justify-center pt-8 pb-4">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200">
-            <Zap className="h-7 w-7 text-white" />
-          </div>
-          <span className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
-            Quantum Bank
-          </span>
-        </Link>
       </div>
 
       {/* Login Form */}

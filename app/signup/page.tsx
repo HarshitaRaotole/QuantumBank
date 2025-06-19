@@ -11,6 +11,9 @@ import { Label } from "@/components/ui/label"
 import { Zap, Eye, EyeOff, Loader2, User, Mail, Lock } from "lucide-react"
 import axios from "axios"
 
+// Define the backend URL using the environment variable
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
+
 export default function RegisterPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -43,9 +46,16 @@ export default function RegisterPage() {
 
     setLoading(true)
 
+    // Add a check to ensure BACKEND_URL is defined
+    if (!BACKEND_URL) {
+      setError("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL.")
+      setLoading(false)
+      return
+    }
+
     try {
-      // Updated API endpoint to match backend route
-      const res = await axios.post("/api/auth/signup", {
+      // Updated API endpoint to match backend route, prepending the BACKEND_URL
+      const res = await axios.post(`${BACKEND_URL}/api/auth/signup`, {
         username: formData.username, // Sending username
         firstName: formData.firstName,
         lastName: formData.lastName,
