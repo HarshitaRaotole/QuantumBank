@@ -1,8 +1,6 @@
 {
   "watch": ["."],
   "ext": "js,mjs,cjs,json",
-  "ignore": ["node_modules", ".git", ".env", "*.log"],
-  "execMap": {
-    "js": "node --loader ts-node/esm" // This might be needed if you have .ts files or complex module resolution
-  }
+  "ignore": ["node_modules", ".git", ".env", "*.log"]
+
 }

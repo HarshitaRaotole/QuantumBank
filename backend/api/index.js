@@ -4,6 +4,8 @@ import dotenv from "dotenv"
 import cors from "cors"
 
 // Load environment variables from .env file
+// For Vercel, environment variables are set directly in the dashboard,
+// so dotenv.config() is primarily for local development.
 dotenv.config()
 
 const app = express()
@@ -66,12 +68,13 @@ app.use((req, res, next) => {
 })
 
 // Import and register your routes here
-import authRoutes from "./routes/authRoutes.js"
-import accountRoutes from "./routes/accountRoutes.js"
-import dashboardRoute from "./routes/dashboardRoute.js"
-import transferRoutes from "./routes/transferRoute.js"
-import transactionRoutes from "./routes/transactionRoutes.js"
-import notificationRoutes from "./routes/notificationRoutes.js"
+// IMPORTANT: Adjust these paths to be relative to backend/api/index.js
+import authRoutes from "../routes/authRoutes.js"
+import accountRoutes from "../routes/accountRoutes.js"
+import dashboardRoute from "../routes/dashboardRoute.js"
+import transferRoutes from "../routes/transferRoute.js"
+import transactionRoutes from "../routes/transactionRoutes.js"
+import notificationRoutes from "../routes/notificationRoutes.js"
 
 app.use("/api/auth", authRoutes)
 app.use("/api/accounts", accountRoutes)
@@ -85,12 +88,11 @@ app.get("/test", (req, res) => {
   res.json({ message: "Server is working!" })
 })
 
-// Connect to MongoDB once when the function is initialized
-// Vercel will call this function on cold starts
+// Connect to MongoDB once when the function is initialized (cold start)
 connectToDatabase().catch((err) => {
   console.error("Failed to connect to MongoDB on function initialization:", err)
   // Depending on your error handling, you might want to exit or just log
 })
 
-// For Vercel, you export the app instance
+// For Vercel, you MUST export the app instance
 export default app
