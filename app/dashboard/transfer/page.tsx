@@ -1,7 +1,8 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+
+import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,25 +14,29 @@ import { ArrowLeft, AlertCircle, CreditCard, CheckCircle } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 interface Account {
+  _id: string
   accountType: string
   accountNumber: string
   balance: number
 }
 
 export default function TransferPage() {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL // Use NEXT_PUBLIC_BACKEND_URL
+  console.log("DEBUG: NEXT_PUBLIC_BACKEND_URL at component render:", backendUrl)
+
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const preSelectedAccount = searchParams.get("fromAccount")
+
   const [accounts, setAccounts] = useState<Account[]>([])
   const [fromAccount, setFromAccount] = useState("")
-  const [toAccountNumber, setToAccountNumber] = useState("")
+  const [toAccountNumber, setToAccountNumber] = useState("") // Changed to toAccountNumber
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
-
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const preSelectedAccount = searchParams.get("fromAccount")
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -41,12 +46,21 @@ export default function TransferPage() {
     }
 
     const fetchAccounts = async () => {
+      console.log("Frontend: Using backend URL for fetchAccounts:", backendUrl)
+
+      if (!backendUrl) {
+        console.error("NEXT_PUBLIC_BACKEND_URL is not set.")
+        setError("Backend URL is not configured. Please contact support.")
+        setLoading(false)
+        router.push("/login")
+        return
+      }
+
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts`, {
+        const response = await fetch(`${backendUrl}/api/accounts`, {
           headers: { Authorization: `Bearer ${token}` },
         })
 
-        // Check if response is JSON
         const contentType = response.headers.get("content-type")
         if (!contentType || !contentType.includes("application/json")) {
           throw new Error("API endpoint not available. Please set up your backend first.")
@@ -57,26 +71,27 @@ export default function TransferPage() {
         if (data.accounts) {
           setAccounts(data.accounts)
 
-          // Pre-select the account if coming from dashboard
           if (preSelectedAccount) {
             const selectedAcc = data.accounts.find((acc: Account) => acc.accountNumber === preSelectedAccount)
             if (selectedAcc) {
-              setFromAccount(selectedAcc.accountNumber)
+              setFromAccount(selectedAcc.accountNumber) // Set account number
             }
+          } else if (data.accounts.length > 0) {
+            setFromAccount(data.accounts[0].accountNumber) // Set account number
           }
         } else {
           setError("No accounts found")
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch accounts:", error)
-        setError("Unable to load accounts. Please ensure your backend API is running.")
+        setError(error.message || "Unable to load accounts. Please ensure your backend API is running.")
       } finally {
         setLoading(false)
       }
     }
 
     fetchAccounts()
-  }, [router, preSelectedAccount])
+  }, [router, preSelectedAccount, backendUrl])
 
   const handleTransfer = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,24 +99,35 @@ export default function TransferPage() {
     setMessage("")
     setError("")
 
-    try {
-      const token = localStorage.getItem("token")
+    if (!backendUrl) {
+      setError("Backend URL is not configured. Please contact support.")
+      setIsLoading(false)
+      return
+    }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/accounts/transfer`, {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      setError("Authentication Required. Please log in to make a transfer.")
+      router.push("/login")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/api/transfers`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          fromAccountNumber: fromAccount,
-          toAccountNumber: toAccountNumber,
+          fromAccountNumber: fromAccount, // Send as fromAccountNumber
+          toAccountNumber: toAccountNumber, // Send as toAccountNumber
           amount: Number.parseFloat(amount),
           description,
         }),
       })
 
-      // Check if response is JSON
       const contentType = response.headers.get("content-type")
       if (!contentType || !contentType.includes("application/json")) {
         throw new Error("Transfer API not available. Please set up your backend transfer endpoint.")
@@ -111,22 +137,25 @@ export default function TransferPage() {
 
       if (response.ok) {
         setMessage("Transfer completed successfully!")
-        // Reset form
-        setFromAccount(preSelectedAccount || "")
+        setFromAccount(preSelectedAccount || (accounts.length > 0 ? accounts[0].accountNumber : ""))
         setToAccountNumber("")
         setAmount("")
         setDescription("")
 
-        // Redirect back to dashboard after 2 seconds
         setTimeout(() => {
           router.push("/dashboard")
         }, 2000)
       } else {
-        setError(result.error || "Transfer failed")
+        console.error("Transfer API Error Response:", {
+          status: response.status,
+          statusText: response.statusText,
+          body: result,
+        })
+        setError(result.error || result.message || `Transfer failed with status ${response.status}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Transfer error:", error)
-      setError("Transfer failed. Please ensure your backend API is running and try again.")
+      setError(error.message || "Transfer failed. Please ensure your backend API is running and try again.")
     } finally {
       setIsLoading(false)
     }
@@ -150,7 +179,6 @@ export default function TransferPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header Section - Matching Dashboard Style */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div>
@@ -171,7 +199,6 @@ export default function TransferPage() {
         </div>
       </div>
 
-      {/* Status Messages */}
       {error && (
         <Card className="border border-red-200 bg-gradient-to-br from-red-50 to-white">
           <CardContent className="p-4">
@@ -194,9 +221,7 @@ export default function TransferPage() {
         </Card>
       )}
 
-      {/* Main Transfer Section */}
       <div className="max-w-4xl mx-auto">
-        {/* Transfer Form */}
         <Card className="border border-purple-100 bg-gradient-to-br from-purple-50 to-white">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-gray-900">Transfer Details</CardTitle>
@@ -218,7 +243,6 @@ export default function TransferPage() {
               </div>
             ) : (
               <form onSubmit={handleTransfer} className="space-y-6">
-                {/* Account Selection */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <Label htmlFor="fromAccount" className="text-sm font-medium text-gray-900">
@@ -264,7 +288,6 @@ export default function TransferPage() {
                   </div>
                 </div>
 
-                {/* Amount Input */}
                 <div className="space-y-3">
                   <Label htmlFor="amount" className="text-sm font-medium text-gray-900">
                     Transfer Amount
@@ -291,7 +314,6 @@ export default function TransferPage() {
                   )}
                 </div>
 
-                {/* Description */}
                 <div className="space-y-3">
                   <Label htmlFor="description" className="text-sm font-medium text-gray-900">
                     Description (Optional)
@@ -306,7 +328,6 @@ export default function TransferPage() {
                   />
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex gap-4 pt-4">
                   <Button
                     type="button"
@@ -336,7 +357,6 @@ export default function TransferPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Tips */}
         <Card className="border border-indigo-100 bg-gradient-to-br from-indigo-50 to-white mt-6">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-gray-900">Quick Tips</CardTitle>

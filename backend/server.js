@@ -21,8 +21,8 @@ app.use(express.json())
 // Configure CORS to allow requests from your Vercel frontend domain
 const allowedOrigins = [
   "http://localhost:3000", // For local Next.js development
-  process.env.FRONTEND_URL, // Your deployed Next.js frontend URL (set this in Vercel env vars)
-].filter(Boolean) // Filter out undefined if FRONTEND_URL is not set
+  "https://quantum-bank-frontend1.vercel.app", // Your deployed Next.js frontend URL
+].filter(Boolean)
 
 app.use(
   cors({
@@ -30,14 +30,14 @@ app.use(
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true)
       if (allowedOrigins.indexOf(origin) === -1) {
-        const msg = `The CORS policy for this site does not allow access from the specified Origin.`
+        const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`
         return callback(new Error(msg), false)
       }
       return callback(null, true)
     },
-    methods: ["GET", "POST", "PUT", "DELETE"], // Allowed HTTP methods
-    credentials: true, // Allow cookies to be sent with requests (if your auth uses them)
-    optionsSuccessStatus: 204, // For preflight requests
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+    optionsSuccessStatus: 204,
   }),
 )
 // --- END CORS CONFIGURATION ---
