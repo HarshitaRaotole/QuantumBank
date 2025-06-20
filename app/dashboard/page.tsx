@@ -104,7 +104,9 @@ const Dashboard = () => {
   // Show loading state while authentication check and data fetching are in progress
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 sm:px-6 lg:px-8">
+        {" "}
+        {/* Added responsive padding here */}
         <div className="space-y-2">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-48" />
@@ -124,7 +126,9 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8">
+      {" "}
+      {/* Added responsive padding here */}
       {/* Welcome Section */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -145,7 +149,6 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
-
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border border-purple-100 bg-gradient-to-br from-purple-50 to-white">
@@ -171,7 +174,6 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
-
       {/* Accounts and Actions Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-900">Your Accounts</h2>
@@ -255,7 +257,6 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-
       {/* Add Account Form */}
       {showForm && (
         <Card className="border border-gray-200 bg-white">

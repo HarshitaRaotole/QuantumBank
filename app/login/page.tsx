@@ -103,9 +103,9 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4 px-6">
+            <CardContent className="space-y-4 px-4 sm:px-6">
               {" "}
-              {/* Reduced padding and space-y */}
+              {/* MODIFIED: px-6 -> px-4 sm:px-6 */}
               <div className="space-y-2">
                 {" "}
                 {/* Reduced space-y */}
@@ -160,9 +160,9 @@ export default function LoginPage() {
                 </div>
               )}
             </CardContent>
-            <div className="flex flex-col space-y-4 px-6 pb-6">
+            <div className="flex flex-col space-y-4 px-4 sm:px-6 pb-6">
               {" "}
-              {/* Reduced padding and space-y */}
+              {/* MODIFIED: px-6 -> px-4 sm:px-6 */}
               <Button
                 type="submit"
                 className="w-full h-10 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]" // Reduced height

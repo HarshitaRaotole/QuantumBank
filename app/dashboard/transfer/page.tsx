@@ -165,7 +165,9 @@ export default function TransferPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 px-4 sm:px-6 lg:px-8">
+        {" "}
+        {/* Added responsive padding here */}
         <div className="space-y-2">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-4 w-48" />
@@ -178,7 +180,9 @@ export default function TransferPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8">
+      {" "}
+      {/* Added responsive padding here */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <div>
@@ -198,7 +202,6 @@ export default function TransferPage() {
           </div>
         </div>
       </div>
-
       {error && (
         <Card className="border border-red-200 bg-gradient-to-br from-red-50 to-white">
           <CardContent className="p-4">
@@ -209,7 +212,6 @@ export default function TransferPage() {
           </CardContent>
         </Card>
       )}
-
       {message && (
         <Card className="border border-green-200 bg-gradient-to-br from-green-50 to-white">
           <CardContent className="p-4">
@@ -220,7 +222,6 @@ export default function TransferPage() {
           </CardContent>
         </Card>
       )}
-
       <div className="max-w-4xl mx-auto">
         <Card className="border border-purple-100 bg-gradient-to-br from-purple-50 to-white">
           <CardHeader>

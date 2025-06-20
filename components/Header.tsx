@@ -188,7 +188,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
-      <div className="flex h-16 items-center justify-between px-6">
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6">
         {/* Left side - Quantum Bank title */}
         <div className="flex items-center gap-4">
           <Link href="/" className="flex items-center gap-2">

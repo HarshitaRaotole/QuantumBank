@@ -15,7 +15,9 @@ export default function Home() {
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-violet-200/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
         </div>
 
-        <div className="container relative px-6 md:px-8">
+        <div className="container relative px-4 sm:px-6 md:px-8">
+          {" "}
+          {/* MODIFIED: px-6 md:px-8 -> px-4 sm:px-6 md:px-8 */}
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
             <div className="flex flex-col justify-center space-y-8">
               <div className="space-y-6">
@@ -42,14 +44,6 @@ export default function Home() {
                   >
                     Start Your Journey
                     <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/about#features">
-                  <Button
-                    size="lg"
-                    className="gap-2 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 px-8 py-4 text-lg"
-                  >
-                    Explore Features
                   </Button>
                 </Link>
               </div>
@@ -97,7 +91,9 @@ export default function Home() {
       </section>
       {/* New Section: Why Choose Quantum Bank */}
       <section className="w-full py-20 md:py-32 bg-white">
-        <div className="container px-6 md:px-8">
+        <div className="container px-4 sm:px-6 md:px-8">
+          {" "}
+          {/* MODIFIED: px-6 md:px-8 -> px-4 sm:px-6 md:px-8 */}
           <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium">
               <Globe className="h-4 w-4" />
@@ -114,7 +110,6 @@ export default function Home() {
               your needs.
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {/* Benefit Card 1 */}
             <div className="flex flex-col items-center text-center p-6 rounded-xl border border-gray-200 bg-gray-50 shadow-sm hover:shadow-md transition-all duration-200">

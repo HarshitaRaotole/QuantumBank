@@ -52,7 +52,9 @@ export default function AboutPage() {
   const [valuesRef, valuesInView] = useInView({ threshold: 0.5 })
 
   return (
-    <main className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center p-6 bg-gray-50">
+    <main className="flex min-h-[calc(100vh-64px)] flex-col items-center justify-center p-4 sm:p-6 md:p-8 bg-gray-50">
+      {" "}
+      {/* MODIFIED: p-6 -> p-4 sm:p-6 md:p-8 */}
       <Card className="w-full max-w-4xl mx-auto border border-purple-100 bg-white text-gray-900 shadow-lg rounded-xl overflow-hidden mb-8">
         <CardHeader className="p-0">
           <div className="relative w-full h-64 bg-gradient-to-br from-purple-500 to-violet-600 flex flex-col items-center justify-center text-white overflow-hidden">

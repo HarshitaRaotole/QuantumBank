@@ -7,7 +7,9 @@ export default function FeaturesPage() {
     <main className="flex-1">
       {/* Features Section */}
       <section id="features" className="w-full py-20 md:py-32 bg-gradient-to-b from-gray-50 to-white">
-        <div className="container px-6 md:px-8">
+        <div className="container px-4 sm:px-6 md:px-8">
+          {" "}
+          {/* MODIFIED: px-6 md:px-8 -> px-4 sm:px-6 md:px-8 */}
           <div className="flex flex-col items-center justify-center space-y-6 text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-100 text-purple-700 text-sm font-medium">
               <Globe className="h-4 w-4" />
@@ -24,7 +26,6 @@ export default function FeaturesPage() {
               faster.
             </p>
           </div>
-
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             <div className="group relative">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-violet-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition-opacity duration-300"></div>

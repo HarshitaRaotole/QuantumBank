@@ -167,7 +167,9 @@ export default function TransactionHistoryPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
+      <div className="space-y-8 px-4 sm:px-6 lg:px-8">
+        {" "}
+        {/* Added responsive padding here */}
         <div className="flex items-center gap-4 mb-2">
           <Skeleton className="h-10 w-32" />
         </div>
@@ -202,7 +204,9 @@ export default function TransactionHistoryPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 sm:px-6 lg:px-8">
+      {" "}
+      {/* Added responsive padding here */}
       {/* Header Section - Matching Dashboard Style */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -243,7 +247,6 @@ export default function TransactionHistoryPage() {
           </Button>
         </div>
       </div>
-
       <Card className="w-full max-w-4xl mx-auto border border-purple-100 bg-white text-gray-900 shadow-sm">
         <CardHeader>
           <CardTitle>Transaction Details</CardTitle>

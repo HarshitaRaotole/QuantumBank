@@ -136,7 +136,8 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4 px-6">
+            <CardContent className="space-y-4 px-4 sm:px-6">
+              {/* MODIFIED: px-6 -> px-4 sm:px-6 */}
               {/* Username Field */}
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium text-gray-700">
@@ -197,7 +198,7 @@ export default function RegisterPage() {
               {/* Email Field */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                  Email
+                  Email{" "}
                 </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -275,7 +276,8 @@ export default function RegisterPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex flex-col space-y-4 px-6 pb-6">
+            <CardFooter className="flex flex-col space-y-4 px-4 sm:px-6 pb-6">
+              {/* MODIFIED: px-6 -> px-4 sm:px-6 */}
               <Button
                 type="submit"
                 className="w-full h-10 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"

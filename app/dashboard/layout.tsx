@@ -14,7 +14,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col bg-white text-gray-800">
       <Header /> {/* Removed username prop */}
-      <main className="flex-1 p-6">{children}</main>
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
     </div>
   )
 }
