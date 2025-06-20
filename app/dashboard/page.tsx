@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft } from "lucide-react"
+import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft, Trash2, Loader2 } from "lucide-react"
 import AddAccountForm from "@/components/AddAccountForm"
 
 interface Account {
@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [showForm, setShowForm] = useState(false)
   const [showBalances, setShowBalances] = useState(true)
   const [loading, setLoading] = useState(true) // Start with loading true
+  const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null)
 
   const router = useRouter()
 
@@ -99,6 +100,50 @@ const Dashboard = () => {
 
   const handleTransfer = (account: Account) => {
     router.push(`/dashboard/transfer?fromAccount=${encodeURIComponent(account.accountNumber)}`)
+  }
+
+  const handleDeleteAccount = async (accountId: string) => {
+    if (!confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
+      return
+    }
+
+    setDeletingAccountId(accountId)
+
+    const token = localStorage.getItem("token")
+    if (!token) {
+      router.push("/login")
+      setDeletingAccountId(null)
+      return
+    }
+
+    if (!BACKEND_URL) {
+      console.error("Backend URL is not configured.")
+      setDeletingAccountId(null)
+      return
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/accounts/${accountId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        // Remove the deleted account from the state
+        setAccounts((prevAccounts) => prevAccounts.filter((acc) => acc._id !== accountId))
+        alert("Account deleted successfully!")
+      } else {
+        const errorData = await response.json()
+        alert(`Failed to delete account: ${errorData.message || response.statusText}`)
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error)
+      alert("An error occurred while trying to delete the account.")
+    } finally {
+      setDeletingAccountId(null)
+    }
   }
 
   // Show loading state while authentication check and data fetching are in progress
@@ -228,6 +273,20 @@ const Dashboard = () => {
                       onClick={() => router.push(`/dashboard/transactions?accountId=${account._id}`)}
                     >
                       History
+                    </Button>
+                    <Button
+                      size="icon" // Changed size to icon for square button
+                      variant="outline"
+                      className="flex-none bg-white text-red-600 border-red-400 hover:bg-purple-100 hover:text-purple-700" // Adjusted flex and removed gap
+                      onClick={() => handleDeleteAccount(account._id)}
+                      disabled={deletingAccountId === account._id}
+                    >
+                      {deletingAccountId === account._id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">Delete Account</span> {/* Added sr-only for accessibility */}
                     </Button>
                   </div>
                 </div>

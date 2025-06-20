@@ -96,6 +96,7 @@ export default function Header() {
 
   useEffect(() => {
     const token = localStorage.getItem("token")
+    console.log("Header.tsx: Token from localStorage:", token) // NEW LOG
     const currentIsLoggedIn = !!token
 
     if (currentIsLoggedIn !== isLoggedIn) {
@@ -131,35 +132,52 @@ export default function Header() {
           },
         })
 
-        const userData = await userRes.json()
-        if (userRes.ok && userData.success) {
-          setUsername(userData.user.username)
-          setEmail(userData.user.email || "")
-          await fetchNotifications(token)
-        } else {
-          console.error("Failed to fetch user data:", userData)
+        // MODIFIED: Check userRes.ok and log full response if not OK
+        if (!userRes.ok) {
+          const errorData = await userRes.json().catch(() => ({})) // Try to parse JSON, default to empty object
+          console.error("Failed to fetch user data. Status:", userRes.status, "Response:", errorData)
           setIsLoggedIn(false)
           localStorage.removeItem("token")
           setUsername("")
           setEmail("")
           setNotifications([])
           setUnreadCount(0)
+          router.push("/login") // Redirect to login on failed user data fetch
+          return // Exit early
+        }
+
+        const userData = await userRes.json()
+        if (userData.success && userData.user) {
+          setUsername(userData.user.username)
+          setEmail(userData.user.email || "")
+          await fetchNotifications(token)
+        } else {
+          // This block handles cases where userRes.ok is true (e.g., 200 OK) but backend sends success: false or no user
+          console.error("Failed to fetch user data: Backend response indicates failure or missing user data.", userData)
+          setIsLoggedIn(false)
+          localStorage.removeItem("token")
+          setUsername("")
+          setEmail("")
+          setNotifications([])
+          setUnreadCount(0)
+          router.push("/login") // Redirect to login if backend response is not as expected
         }
       } catch (err) {
-        console.error("Error fetching user or notifications:", err)
+        console.error("Error fetching user or notifications (network/parsing error):", err)
         setIsLoggedIn(false)
         localStorage.removeItem("token")
         setUsername("")
         setEmail("")
         setNotifications([])
         setUnreadCount(0)
+        router.push("/login") // Redirect to login on network/parsing errors
       } finally {
         setLoading(false)
       }
     }
 
     fetchUserData()
-  }, [isLoggedIn, pathname])
+  }, [isLoggedIn, pathname, router]) // Added router to dependency array
 
   const displayName = username || "User"
   const initial = displayName ? displayName.charAt(0).toUpperCase() : "?"

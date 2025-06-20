@@ -1,7 +1,7 @@
 import Account from "../models/Account.js"
 import Transaction from "../models/Transaction.js"
 import User from "../models/User.js"
-import Notification from "../models/Notification.js" // NEW: Import Notification model
+import Notification from "../models/Notification.js"
 import mongoose from "mongoose"
 
 // Add a new account
@@ -306,5 +306,41 @@ export const transferMoney = async (req, res) => {
       error: "Transfer failed",
       details: process.env.NODE_ENV === "development" ? error.message : undefined,
     })
+  }
+}
+
+// NEW: Delete an account
+export const deleteAccount = async (req, res) => {
+  try {
+    const accountId = req.params.id
+    const userId = req.user?.userId // Assuming authenticateToken attaches user ID to req.user.userId
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized: User ID missing",
+      })
+    }
+
+    // Find the account and ensure it belongs to the authenticated user
+    // Use findOneAndDelete for atomic operation and to get the deleted document
+    const accountToDelete = await Account.findOneAndDelete({ _id: accountId, user: userId })
+
+    if (!accountToDelete) {
+      return res.status(404).json({ message: "Account not found or you do not have permission to delete it." })
+    }
+
+    // Optional: You might want to delete associated transactions or handle them
+    // For simplicity, we're just deleting the account here.
+    // await Transaction.deleteMany({ account: accountId });
+
+    res.status(200).json({ message: "Account deleted successfully", accountId })
+  } catch (error) {
+    console.error("❌ Error deleting account:", error)
+    // Check for CastError if an invalid ID format is provided
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid account ID format." })
+    }
+    res.status(500).json({ message: "Server error during account deletion.", error: error.message })
   }
 }

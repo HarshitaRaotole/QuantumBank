@@ -84,11 +84,14 @@ export default function RegisterPage() {
         // Backend might return 200 or 201
         const { token, user } = res.data // Destructure token and user from response data
 
-        // ✅ Save token and full user object to localStorage
+        // ADD THIS NEW LOG LINE HERE:
+        console.log("Signup: Token received from backend (before saving):", token)
+
         localStorage.setItem("token", token)
         localStorage.setItem("user", JSON.stringify(user))
+        console.log("Token saved to localStorage:", localStorage.getItem("token")) // NEW LOG
 
-        router.push("/dashboard/accounts") // Redirect directly to dashboard accounts page
+        router.push("/login") // Redirect to login page after successful signup
       }
     } catch (err: any) {
       // Check if the error response exists and handle accordingly
