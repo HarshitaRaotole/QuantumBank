@@ -6,7 +6,7 @@ import cors from "cors"
 dotenv.config()
 
 const app = express()
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 3001 // PORT is typically not used in Vercel serverless, but kept for local dev
 
 app.use(express.json())
 
@@ -33,6 +33,7 @@ app.use((req, res, next) => {
   next()
 })
 
+// Import and register your routes here
 import authRoutes from "./routes/authRoutes.js"
 import accountRoutes from "./routes/accountRoutes.js"
 import dashboardRoute from "./routes/dashboardRoute.js"
@@ -78,8 +79,12 @@ async function connectToDatabase() {
   }
 }
 
+// ✅ MODIFIED: Call connectToDatabase directly. Mongoose will buffer operations until connected.
+// This is the standard pattern for serverless functions.
 connectToDatabase().catch((err) => {
   console.error("Failed to connect to MongoDB on function initialization:", err)
+  // In a serverless environment, you might not want to process.exit(1) here
+  // as it could prevent the function from ever starting. Logging is usually sufficient.
 })
 
 mongoose.connection.on("connected", () => {
@@ -98,6 +103,5 @@ app.get("/", (req, res) => {
   res.send("Backend is running!")
 })
 
-app.listen(PORT, () => {
-  console.log(`Backend server listening on port ${PORT}`)
-})
+// ✅ NEW: Export the app instance for Vercel to use
+export default app
