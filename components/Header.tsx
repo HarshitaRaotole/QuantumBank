@@ -14,7 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import { Bell, LogOut, ChevronDown, Zap, Dot } from "lucide-react"
+import { Bell, LogOut, ChevronDown, Zap, Dot, Menu } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet" // Added SheetTitle
 
 // Notification Interface
 interface Notification {
@@ -27,15 +28,14 @@ interface Notification {
 // Define the backend URL using the environment variable
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
 
-// Removed HeaderProps interface as username prop is no longer needed
 export default function Header() {
-  // Initialize isLoggedIn based on localStorage immediately during client-side render
   const [isLoggedIn, setIsLoggedIn] = useState(typeof window !== "undefined" ? !!localStorage.getItem("token") : false)
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false) // State for mobile menu
 
   const router = useRouter()
   const pathname = usePathname()
@@ -98,23 +98,20 @@ export default function Header() {
     const token = localStorage.getItem("token")
     const currentIsLoggedIn = !!token
 
-    // Update isLoggedIn state if it differs from the initial render or previous effect run
     if (currentIsLoggedIn !== isLoggedIn) {
       setIsLoggedIn(currentIsLoggedIn)
     }
 
     const fetchUserData = async () => {
       if (!currentIsLoggedIn) {
-        // Use currentIsLoggedIn for this check
-        setUsername("") // Clear username if not logged in
-        setEmail("") // Clear email
-        setNotifications([]) // Clear notifications
+        setUsername("")
+        setEmail("")
+        setNotifications([])
         setUnreadCount(0)
         setLoading(false)
         return
       }
 
-      // Add a check to ensure BACKEND_URL is defined
       if (!BACKEND_URL) {
         console.error("Backend URL is not configured for user data fetch.")
         setIsLoggedIn(false)
@@ -129,7 +126,6 @@ export default function Header() {
 
       try {
         const userRes = await fetch(`${BACKEND_URL}/api/auth/me`, {
-          // Use BACKEND_URL
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -139,10 +135,10 @@ export default function Header() {
         if (userRes.ok && userData.success) {
           setUsername(userData.user.username)
           setEmail(userData.user.email || "")
-          await fetchNotifications(token) // Fetch notifications only if user data is successful
+          await fetchNotifications(token)
         } else {
           console.error("Failed to fetch user data:", userData)
-          setIsLoggedIn(false) // Force logout if user data fetch fails
+          setIsLoggedIn(false)
           localStorage.removeItem("token")
           setUsername("")
           setEmail("")
@@ -151,7 +147,7 @@ export default function Header() {
         }
       } catch (err) {
         console.error("Error fetching user or notifications:", err)
-        setIsLoggedIn(false) // Force logout on network error
+        setIsLoggedIn(false)
         localStorage.removeItem("token")
         setUsername("")
         setEmail("")
@@ -163,14 +159,13 @@ export default function Header() {
     }
 
     fetchUserData()
-  }, [isLoggedIn, pathname]) // Added isLoggedIn and pathname to dependencies
+  }, [isLoggedIn, pathname])
 
-  const displayName = username || "User" // Removed propUsername fallback
+  const displayName = username || "User"
   const initial = displayName ? displayName.charAt(0).toUpperCase() : "?"
 
   const handleLogout = () => {
     localStorage.removeItem("token")
-    // Force a full page reload to ensure all components re-initialize
     window.location.href = "/login"
   }
 
@@ -184,6 +179,12 @@ export default function Header() {
     } else {
       router.push("/login")
     }
+    setIsMobileMenuOpen(false) // Close mobile menu on click
+  }
+
+  const handleNavLinkClick = (path: string) => {
+    router.push(path)
+    setIsMobileMenuOpen(false) // Close mobile menu on click
   }
 
   return (
@@ -201,7 +202,7 @@ export default function Header() {
           </Link>
         </div>
 
-        {/* Center - Navigation Links */}
+        {/* Center - Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-6 text-gray-700 text-sm font-medium">
           <Link href="/" className="hover:text-purple-600 transition-colors">
             Home
@@ -212,7 +213,6 @@ export default function Header() {
           <Link href="/about" className="hover:text-purple-600 transition-colors">
             About
           </Link>
-          {/* Dashboard link visible only if logged in */}
           {isLoggedIn && (
             <button onClick={handleDashboardClick} className="hover:text-purple-600 transition-colors">
               Dashboard
@@ -220,9 +220,9 @@ export default function Header() {
           )}
         </nav>
 
-        {/* Right side - User menu / Login & Signup */}
+        {/* Right side - User menu / Login & Signup / Mobile Menu */}
         <div className="flex items-center gap-4">
-          {isLoggedIn ? ( // Show notifications/user menu if logged in
+          {isLoggedIn ? (
             <>
               {/* Notifications Dropdown */}
               <DropdownMenu onOpenChange={(open) => !open && handleDropdownClose()}>
@@ -282,12 +282,12 @@ export default function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* User Menu */}
+              {/* User Menu (Desktop) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="flex items-center gap-3 px-3 py-2 h-auto text-gray-700 hover:bg-purple-100"
+                    className="hidden md:flex items-center gap-3 px-3 py-2 h-auto text-gray-700 hover:bg-purple-100"
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-violet-600 text-white font-semibold">
@@ -322,8 +322,8 @@ export default function Header() {
               </DropdownMenu>
             </>
           ) : (
-            // Show Login/Signup buttons if not logged in
-            <div className="flex items-center gap-2">
+            // Show Login/Signup buttons if not logged in (desktop)
+            <div className="hidden md:flex items-center gap-2">
               <Button onClick={() => router.push("/login")} className="bg-purple-600 hover:bg-purple-700 text-white">
                 Log In
               </Button>
@@ -332,6 +332,104 @@ export default function Header() {
               </Button>
             </div>
           )}
+
+          {/* Mobile Menu (Hamburger Icon) */}
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 hover:bg-purple-100">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[250px] sm:w-[300px] bg-white p-6 flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                <Link href="/" className="flex items-center gap-2" onClick={() => setIsMobileMenuOpen(false)}>
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-white" />
+                  </div>
+                  <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                    Quantum Bank
+                  </h1>
+                </Link>
+              </div>
+              <SheetTitle className="sr-only">Mobile Navigation</SheetTitle>
+              <nav className="flex flex-col gap-4 text-base font-medium text-gray-700 flex-1">
+                {" "}
+                {/* Added flex-1 */}
+                <Link
+                  href="/"
+                  className="hover:text-purple-600 transition-colors"
+                  onClick={() => handleNavLinkClick("/")}
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/features"
+                  className="hover:text-purple-600 transition-colors"
+                  onClick={() => handleNavLinkClick("/features")}
+                >
+                  Features
+                </Link>
+                <Link
+                  href="/about"
+                  className="hover:text-purple-600 transition-colors"
+                  onClick={() => handleNavLinkClick("/about")}
+                >
+                  About
+                </Link>
+                {isLoggedIn && (
+                  <button onClick={handleDashboardClick} className="text-left hover:text-purple-600 transition-colors">
+                    Dashboard
+                  </button>
+                )}
+              </nav>
+
+              {/* User/Auth section for mobile menu */}
+              <div className="mt-auto pt-4 border-t border-gray-200">
+                {" "}
+                {/* Added mt-auto and pt-4 */}
+                {isLoggedIn ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-gradient-to-br from-purple-500 to-violet-600 text-white font-semibold text-lg">
+                          {initial}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <span className="text-base font-medium capitalize text-gray-900">
+                          {loading ? "Loading..." : displayName}
+                        </span>
+                        <span className="text-sm text-gray-500">{email || "user@example.com"}</span>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={handleLogout}
+                      className="w-full gap-2 bg-red-600 hover:bg-red-700 text-white text-base"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Log out
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <Button
+                      onClick={() => handleNavLinkClick("/login")}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      Log In
+                    </Button>
+                    <Button
+                      onClick={() => handleNavLinkClick("/signup")}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
