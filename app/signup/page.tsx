@@ -1,5 +1,4 @@
 "use client"
-
 import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
@@ -83,15 +82,11 @@ export default function RegisterPage() {
       if (res.status === 201 || res.status === 200) {
         // Backend might return 200 or 201
         const { token, user } = res.data // Destructure token and user from response data
-
-        // ADD THIS NEW LOG LINE HERE:
         console.log("Signup: Token received from backend (before saving):", token)
-
         localStorage.setItem("token", token)
         localStorage.setItem("user", JSON.stringify(user))
         console.log("Token saved to localStorage:", localStorage.getItem("token")) // NEW LOG
-
-        router.push("/login") // Redirect to login page after successful signup
+        router.push("/dashboard") // Redirect to dashboard page after successful signup
       }
     } catch (err: any) {
       // Check if the error response exists and handle accordingly
@@ -140,7 +135,6 @@ export default function RegisterPage() {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4 px-4 sm:px-6">
-              {/* MODIFIED: px-6 -> px-4 sm:px-6 */}
               {/* Username Field */}
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-sm font-medium text-gray-700">
@@ -159,7 +153,6 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-
               {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -197,7 +190,6 @@ export default function RegisterPage() {
                   </div>
                 </div>
               </div>
-
               {/* Email Field */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">
@@ -217,7 +209,6 @@ export default function RegisterPage() {
                   />
                 </div>
               </div>
-
               {/* Password Fields */}
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">
@@ -245,7 +236,6 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
                   Confirm Password
@@ -272,7 +262,6 @@ export default function RegisterPage() {
                   </button>
                 </div>
               </div>
-
               {error && (
                 <div className="p-3 rounded-lg bg-red-50 border border-red-200">
                   <p className="text-sm font-medium text-red-600">{error}</p>
@@ -280,7 +269,6 @@ export default function RegisterPage() {
               )}
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 px-4 sm:px-6 pb-6">
-              {/* MODIFIED: px-6 -> px-4 sm:px-6 */}
               <Button
                 type="submit"
                 className="w-full h-10 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
