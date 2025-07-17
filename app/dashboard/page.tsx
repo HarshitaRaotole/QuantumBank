@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft, Trash2, Loader2 } from "lucide-react"
+import { CreditCard, Plus, Wallet, Eye, EyeOff, ArrowRightLeft, Trash2, Loader2, LogOut } from "lucide-react" // Added LogOut icon
 import AddAccountForm from "@/components/AddAccountForm"
 
 interface Account {
@@ -26,14 +26,13 @@ const Dashboard = () => {
   const [showBalances, setShowBalances] = useState(true)
   const [loading, setLoading] = useState(true) // Start with loading true
   const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null)
-
   const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("token")
     if (!token) {
-      // If no token, redirect to login immediately
-      router.push("/login")
+      // If no token, redirect to app page immediately
+      router.push("/app")
       return
     }
 
@@ -42,28 +41,26 @@ const Dashboard = () => {
       if (!BACKEND_URL) {
         console.error("Backend URL is not configured. Please set NEXT_PUBLIC_BACKEND_URL.")
         setLoading(false)
-        router.push("/login") // Redirect if backend URL is missing
+        router.push("/app") // Changed from /login
         return
       }
 
       try {
         const [userRes, accountsRes] = await Promise.all([
           fetch(`${BACKEND_URL}/api/auth/me`, {
-            // Use BACKEND_URL
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(`${BACKEND_URL}/api/accounts`, {
-            // Use BACKEND_URL
             headers: { Authorization: `Bearer ${token}` },
           }),
         ])
 
         // Check if user data fetch was successful and user is authenticated
         if (!userRes.ok) {
-          // If user data fetch fails (e.g., token expired/invalid), redirect to login
-          console.error("Failed to fetch user data, redirecting to login.")
-          localStorage.removeItem("token") // Clear invalid token
-          router.push("/login")
+          // If user data fetch fails (e.g., token expired/invalid), redirect to app page
+          console.error("Failed to fetch user data, redirecting to app page.") // Updated message
+          localStorage.removeItem("token")
+          router.push("/app") // Changed from /login
           return
         }
 
@@ -80,18 +77,18 @@ const Dashboard = () => {
       } catch (err) {
         console.error("Error fetching data:", err)
         // Catch network errors or other exceptions and redirect
-        localStorage.removeItem("token") // Clear token on error
-        router.push("/login")
+        localStorage.removeItem("token")
+        router.push("/app") // Changed from /login
       } finally {
         setLoading(false) // Set loading to false after data fetch or redirect
       }
     }
-
     fetchData()
   }, [router]) // Depend on router to ensure effect runs when router is ready
 
   const displayName = user?.username || "User"
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0)
+
   const accountTypeColors = {
     Savings: "bg-purple-100 text-purple-700 border-purple-200",
     Current: "bg-violet-100 text-violet-700 border-violet-200",
@@ -106,22 +103,18 @@ const Dashboard = () => {
     if (!confirm("Are you sure you want to delete this account? This action cannot be undone.")) {
       return
     }
-
     setDeletingAccountId(accountId)
-
     const token = localStorage.getItem("token")
     if (!token) {
-      router.push("/login")
+      router.push("/app") // Changed from /login
       setDeletingAccountId(null)
       return
     }
-
     if (!BACKEND_URL) {
       console.error("Backend URL is not configured.")
       setDeletingAccountId(null)
       return
     }
-
     try {
       const response = await fetch(`${BACKEND_URL}/api/accounts/${accountId}`, {
         method: "DELETE",
@@ -129,7 +122,6 @@ const Dashboard = () => {
           Authorization: `Bearer ${token}`,
         },
       })
-
       if (response.ok) {
         // Remove the deleted account from the state
         setAccounts((prevAccounts) => prevAccounts.filter((acc) => acc._id !== accountId))
@@ -144,6 +136,11 @@ const Dashboard = () => {
     } finally {
       setDeletingAccountId(null)
     }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("token") // Clear the token from local storage
+    router.push("/app") // Redirect to the app page
   }
 
   // Show loading state while authentication check and data fetching are in progress
@@ -191,6 +188,15 @@ const Dashboard = () => {
               {showBalances ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               {showBalances ? "Hide" : "Show"} Balances
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="gap-2 bg-red-600 hover:bg-red-700 border-red-600 text-white hover:text-white"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
           </div>
         </div>
       </div>
@@ -207,7 +213,6 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-
         <Card className="border border-violet-100 bg-gradient-to-br from-violet-50 to-white">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-violet-700">Active Accounts</CardTitle>
@@ -222,7 +227,6 @@ const Dashboard = () => {
       {/* Accounts and Actions Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-900">Your Accounts</h2>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {/* Existing Account Cards */}
           {accounts.map((account, index) => (
@@ -293,7 +297,6 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           ))}
-
           {/* Add Account Card */}
           <Card className="group hover:shadow-lg transition-all duration-200 border-2 border-dashed border-purple-300 hover:border-purple-400 bg-white">
             <CardContent className="flex flex-col items-center justify-center p-6 text-center space-y-4">
