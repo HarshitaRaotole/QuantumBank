@@ -36,7 +36,6 @@ export default function Header() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false) // State for mobile menu
-
   const router = useRouter()
   const pathname = usePathname()
 
@@ -66,14 +65,11 @@ export default function Header() {
   const markAllNotificationsAsRead = async () => {
     const token = localStorage.getItem("token")
     if (!token || unreadCount === 0) return
-
     if (!BACKEND_URL) {
       console.error("Backend URL is not configured for marking notifications as read.")
       return
     }
-
     const unreadNotificationIds = notifications.filter((n) => !n.isRead).map((n) => n._id)
-
     try {
       const res = await fetch(`${BACKEND_URL}/api/notifications/mark-read`, {
         method: "POST",
@@ -98,11 +94,9 @@ export default function Header() {
     const token = localStorage.getItem("token")
     console.log("Header.tsx: Token from localStorage:", token) // NEW LOG
     const currentIsLoggedIn = !!token
-
     if (currentIsLoggedIn !== isLoggedIn) {
       setIsLoggedIn(currentIsLoggedIn)
     }
-
     const fetchUserData = async () => {
       if (!currentIsLoggedIn) {
         setUsername("")
@@ -112,7 +106,6 @@ export default function Header() {
         setLoading(false)
         return
       }
-
       if (!BACKEND_URL) {
         console.error("Backend URL is not configured for user data fetch.")
         setIsLoggedIn(false)
@@ -124,14 +117,12 @@ export default function Header() {
         setLoading(false)
         return
       }
-
       try {
         const userRes = await fetch(`${BACKEND_URL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
-
         // MODIFIED: Check userRes.ok and log full response if not OK
         if (!userRes.ok) {
           const errorData = await userRes.json().catch(() => ({})) // Try to parse JSON, default to empty object
@@ -145,7 +136,6 @@ export default function Header() {
           router.push("/login") // Redirect to login on failed user data fetch
           return // Exit early
         }
-
         const userData = await userRes.json()
         if (userData.success && userData.user) {
           setUsername(userData.user.username)
@@ -175,7 +165,6 @@ export default function Header() {
         setLoading(false)
       }
     }
-
     fetchUserData()
   }, [isLoggedIn, pathname, router]) // Added router to dependency array
 
@@ -184,7 +173,7 @@ export default function Header() {
 
   const handleLogout = () => {
     localStorage.removeItem("token")
-    window.location.href = "/login"
+    router.push("/") // Changed redirection to the home page
   }
 
   const handleDropdownClose = () => {
@@ -401,7 +390,6 @@ export default function Header() {
                   </button>
                 )}
               </nav>
-
               {/* User/Auth section for mobile menu */}
               <div className="mt-auto pt-4 border-t border-gray-200">
                 {" "}

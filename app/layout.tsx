@@ -1,18 +1,20 @@
-import type React from "react"
-import type { Metadata } from "next"
-import ClientLayout from "@/app/ClientLayout" // Changed import path to use absolute alias
+import type React from "react";
+import type { Metadata } from "next";
+import ClientLayout from "@/app/ClientLayout"; // Absolute alias import
 
-// Metadata is a server-only export, so it stays here in the Server Component layout
+// Server-only metadata
 export const metadata: Metadata = {
   title: "Quantum Bank - Smart Banking",
   description: "Next-generation banking platform with intelligent financial management",
-  generator: "v0.dev",
-}
+  verification: {
+    google: "3T-VEgkMPYgdFK78bQS7urxLls42WHaL9s2megIXzdc",
+  },
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
-  return <ClientLayout>{children}</ClientLayout>
+  return <ClientLayout>{children}</ClientLayout>;
 }
